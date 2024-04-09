@@ -30,7 +30,7 @@ const candidateSchema = new Schema(
       type: String,
       
     },
-    Certifications: {
+    certifications: {
       type: [String],
     },
     desiredPay: {
