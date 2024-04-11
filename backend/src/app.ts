@@ -3,8 +3,12 @@ import express, { NextFunction, Request, Response } from "express";
 import candidateRoutes from "./routes/candidates";
 import morgan from "morgan";
 import createHttpError, { isHttpError } from "http-errors";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const cors = require('cors');
 
 const app = express();
+
+app.use(cors());
 
 app.use(morgan("dev"));
 
@@ -16,8 +20,8 @@ app.use((req, res, next) => {
   next(createHttpError(404,"Not found"));
 });
 
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//* eslint disabled due to let being used below
 app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
   console.error(error);
   let errorMessage = "An unknown error occurred";
