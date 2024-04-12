@@ -14,7 +14,7 @@ export default function CandidateTable({ candidates }) {
       </thead>
       <tbody>
         {candidates.map((candidate) => (
-          <Candidate key={candidate.id} candidate={candidate} />
+          <Candidate key={candidate._id} candidate={candidate} />
         ))}
       </tbody>
     </Table>
