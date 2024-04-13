@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Candidate as CandidateModel } from "./models/candidate";
 import { Container } from "react-bootstrap";
 import CandidateTable from "@/components/candidateTable";
-
+import Nav from "@/components/Nav";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
@@ -37,6 +37,7 @@ useEffect(() => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <Nav />
       <Container>
       <CandidateTable candidates={candidates} />
       </Container>
