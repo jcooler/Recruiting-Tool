@@ -1,8 +1,10 @@
 import Candidate from "./candidate";
 import { Table } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 
 export default function CandidateTable({ candidates }) {
   return (
+    <Container>
     <Table striped bordered hover responsive>
       <thead>
         <tr>
@@ -18,5 +20,6 @@ export default function CandidateTable({ candidates }) {
         ))}
       </tbody>
     </Table>
+    </Container>
   );
 }

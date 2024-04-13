@@ -3,9 +3,10 @@ import Image from "next/image";
 import { Inter } from "next/font/google";
 import { useState, useEffect } from "react";
 import { Candidate as CandidateModel } from "./models/candidate";
-import { Container } from "react-bootstrap";
 import CandidateTable from "@/components/candidateTable";
 import Nav from "@/components/Nav";
+import NewCandidate from "@/components/newCandidate";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
@@ -38,9 +39,9 @@ useEffect(() => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Nav />
-      <Container>
+    <NewCandidate />
       <CandidateTable candidates={candidates} />
-      </Container>
+      
     </>
   ); 
 }
