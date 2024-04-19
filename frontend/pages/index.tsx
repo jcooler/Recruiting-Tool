@@ -6,6 +6,7 @@ import { Candidate as CandidateModel } from "./models/candidate";
 import CandidateTable from "@/components/candidateTable";
 import Nav from "@/components/Nav";
 import NewCandidate from "@/components/newCandidate";
+import * as CandidatesApi from "@/network/candidate-api";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,8 +15,8 @@ export default function Home() {
 const [candidates, setCandidates] = useState<CandidateModel[]>([]);
 
 useEffect(() => {
-  const fetchCandidates = async () => {
-
+async function fetchCandidates() {
+const candidates = await CandidatesApi.fetchCandidates();
     try {
       const response = await fetch("http://localhost:5001/api/candidates/", {method: "GET"});
       const candidates = await response.json();

@@ -44,8 +44,6 @@ const candidateSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "passed", "hired"],
-      default: "active",
     },
   },
   {
