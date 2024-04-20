@@ -33,10 +33,10 @@ if (updatedAt > createdAt) {
     
 
   <tr>
-    <td>{candidate.name}</td>
-    <td>{candidate.email}</td>
-    <td>{createdAt}</td>
-    <td>{candidate.status}</td>
+    <td>{name}</td>
+    <td>{email}</td>
+    <td>{createdUpdatedText}</td>
+    <td>{status}</td>
   </tr>
 
   );

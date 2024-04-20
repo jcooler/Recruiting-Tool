@@ -1,198 +1,164 @@
 import { useState } from "react";
 import { Modal, Button, Form, Row, Col} from "react-bootstrap";
 import styles from "@/styles/newCandidate.module.css";
+import { useForm } from "react-hook-form";
+import { CandidateInput } from "@/network/candidate-api";
+import * as candidateApi from "@/network/candidate-api";
 
-const NewCandidate = ({ onAddCandidate }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    status: "",
-    phone: "",
-    address: "",
-    skills: "",
-    experience: "",
-    education: "",
-    certifications: "",
-    desiredPay: "",
-    typeOfEmployment: "",
-    desiredWorkLocation: "",
-  });
 
-  const handleClose = () => setShowModal(false);
-  const handleShow = () => setShowModal(true);
+interface NewCandidateProps {
+onDismiss: () => void;
+onCandidateAdded: (candidate: Candidate) => void;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
-  };
+}
 
-  const handleSubmit = () => {
-    // Add validation if needed
-    onAddCandidate(formData);
-    setFormData({
-      name: "",
-      email: "",
-      status: "",
-      phone: "",
-      address: "",
-      skills: "",
-      experience: "",
-      education: "",
-      certifications: "",
-      desiredPay: "",
-      typeOfEmployment: "",
-      desiredWorkLocation: "",
-    });
-    handleClose();
-  };
+const NewCandidate = ({onDismiss, onCandidateAdded}: NewCandidateProps) => {
+  
+  const { register, handleSubmit, formState: {errors, isSubmitting} } = useForm<CandidateInput>();
+
+  async function onSubmit(input: CandidateInput) {
+try {
+  const formResponse = await candidateApi.createCandidate(input);
+  onCandidateAdded(formResponse);
+} catch (error) {
+  console.log(error);
+  alert(error);
+}
+  }
 
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
-        Add Candidate
-      </Button>
-
-      <Modal show={showModal} onHide={handleClose} dialogClassName={styles.modal}>
+      <Modal show onHide={onDismiss}>
         <Modal.Header closeButton>
-          <Modal.Title>Add New Candidate</Modal.Title>
+          <Modal.Title>Add Candidate</Modal.Title>
+          
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form id="addCandidateForm" onSubmit={handleSubmit(onSubmit)}>
             <Row>
               <Col>
-            <Form.Group controlId="name">
+            <Form.Group >
               <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
+                isInvalid={!!errors.name}
+                {...register("name", {required: "Name is required"})}
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.name?.message}
+              </Form.Control.Feedback>
             </Form.Group>
             </Col>
             <Col>
-            <Form.Group controlId="email">
+            <Form.Group >
               <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
+                {...register("email", {required: "Email is required"})}
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.email?.message}
+              </Form.Control.Feedback>
             </Form.Group>
             </Col>
             </Row>
-
-            <Form.Group controlId="status">
+<Row>
+  <Col>
+            <Form.Group >
               <Form.Label>Status</Form.Label>
               <Form.Control
                 type="text"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
+                {...register("status")}
               />
             </Form.Group>
-
-            <Form.Group controlId="phone">
+</Col>
+<Col>
+            <Form.Group >
               <Form.Label>Phone</Form.Label>
               <Form.Control
                 type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
+                {...register("phone")}
+                
               />
             </Form.Group>
-
-            <Form.Group controlId="address">
+</Col>
+            </Row>
+            <Form.Group >
               <Form.Label>Address</Form.Label>
               <Form.Control
                 type="text"
                 name="address"
-                value={formData.address}
-                onChange={handleChange}
+                
               />
             </Form.Group>
 
-            <Form.Group controlId="skills">
+            <Form.Group >
               <Form.Label>Skills</Form.Label>
               <Form.Control
                 type="text"
-                name="skills"
-                value={formData.skills}
-                onChange={handleChange}
+                {...register("skills")}
+              
               />
             </Form.Group>
 
-            <Form.Group controlId="experience">
+            <Form.Group >
               <Form.Label>Experience</Form.Label>
               <Form.Control
                 type="number"
                 name="experience"
-                value={formData.experience}
-                onChange={handleChange}
+             
               />
             </Form.Group>
 
-            <Form.Group controlId="education">
+            <Form.Group >
               <Form.Label>Education</Form.Label>
               <Form.Control
                 type="text"
-                name="education"
-                value={formData.education}
-                onChange={handleChange}
+                {...register("education")}
               />
             </Form.Group>
 
-            <Form.Group controlId="certifications">
+            <Form.Group >
               <Form.Label>Certifications</Form.Label>
               <Form.Control
                 type="text"
-                name="certifications"
-                value={formData.certifications}
-                onChange={handleChange}
+                {...register("certifications")}
+              
               />
             </Form.Group>
 
-            <Form.Group controlId="desiredPay">
+            <Form.Group >
               <Form.Label>Desired Pay</Form.Label>
               <Form.Control
                 type="text"
-                name="desiredPay"
-                value={formData.desiredPay}
-                onChange={handleChange}
+                {...register("desiredPay")}
               />
             </Form.Group>
 
-            <Form.Group controlId="typeOfEmployment">
+            <Form.Group >
               <Form.Label>Type of Employment</Form.Label>
               <Form.Control
                 type="text"
-                name="typeOfEmployment"
-                value={formData.typeOfEmployment}
-                onChange={handleChange}
+                {...register("typeOfEmployment")}
               />
             </Form.Group>
 
-            <Form.Group controlId="desiredWorkLocation">
+            <Form.Group >
               <Form.Label>Desired Work Location</Form.Label>
               <Form.Control
                 type="text"
-                name="desiredWorkLocation"
-                value={formData.desiredWorkLocation}
-                onChange={handleChange}
+                {...register("desiredWorkLocation")}
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            Add
+          <Button variant="primary" 
+          type="submit"
+          form="addCandidateForm"
+          disabled={isSubmitting}
+          >
+            Save
           </Button>
         </Modal.Footer>
       </Modal>

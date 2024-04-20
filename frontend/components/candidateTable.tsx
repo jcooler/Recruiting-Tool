@@ -10,7 +10,7 @@ export default function CandidateTable({ candidates }) {
         <tr>
           <th>Name</th>
           <th>Email</th>
-          <th>Updated</th>
+          <th>Created</th>
           <th>Status</th>
         </tr>
       </thead>

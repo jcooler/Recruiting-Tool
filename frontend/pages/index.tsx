@@ -7,12 +7,15 @@ import CandidateTable from "@/components/candidateTable";
 import Nav from "@/components/Nav";
 import NewCandidate from "@/components/newCandidate";
 import * as CandidatesApi from "@/network/candidate-api";
+import { Button } from "react-bootstrap";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
 
 const [candidates, setCandidates] = useState<CandidateModel[]>([]);
+
+const [show, setShow] = useState(false);
 
 useEffect(() => {
 async function fetchCandidates() {
@@ -40,7 +43,18 @@ const candidates = await CandidatesApi.fetchCandidates();
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Nav />
-    <NewCandidate />
+      <Button onClick={setShow} >
+        Add Candidate
+      </Button>
+    {
+      show && <NewCandidate
+      onDismiss={() => setShow(false)}
+      onCandidateAdded={(newCandidate) => {
+        setCandidates([...candidates, newCandidate]);
+        setShow(false);
+      }}
+      />
+    }
       <CandidateTable candidates={candidates} />
       
     </>
