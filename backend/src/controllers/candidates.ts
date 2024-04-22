@@ -46,6 +46,7 @@ desiredPay?: string;
 typeOfEmployment?: string[];
 desiredWorkLocation?: string[];
 status?: string;
+notes?: string;
 
 }
 //* Create candidate
@@ -63,6 +64,7 @@ export const createCandidate: RequestHandler<unknown, unknown, CreateCandidateBo
   const typeOfEmployment = req.body.typeOfEmployment;
   const desiredWorkLocation = req.body.desiredWorkLocation;
   const status = req.body.status;
+  const notes = req.body.notes;
 
   try {
 
@@ -85,6 +87,7 @@ if (!name) {
       typeOfEmployment,
       desiredWorkLocation,
       status,
+      notes,
     });
 
     res.status(201).json(newCandidate);
@@ -112,6 +115,7 @@ desiredPay?: string;
 typeOfEmployment?: string[];
 desiredWorkLocation?: string[];
 status?: string;
+notes?: string;
 
 }
 
@@ -131,7 +135,7 @@ export const updateCandidate: RequestHandler<UpdateCandidateParams, unknown, Upd
   const newTypeOfEmployment = req.body.typeOfEmployment ?? [];
 const newDesiredWorkLocation = req.body.desiredWorkLocation ?? [];
 const newStatus = req.body.status || "active";
-
+const newNotes = req.body.notes;
   try {
   if (!mongoose.isValidObjectId(candidateId)) {
     throw createHttpError(400, "Invalid candidate ID");
@@ -150,9 +154,9 @@ const newStatus = req.body.status || "active";
         throw createHttpError(404, "Candidate not found");
       }
 
-      if (newStatus !== "active" && newStatus !== "inactive") {
-        throw createHttpError(400, "Invalid status. Status must be 'active' or 'inactive'");
-      } 
+      // if (newStatus !== "active" && newStatus !== "inactive") {
+      //   throw createHttpError(400, "Invalid status. Status must be 'active' or 'inactive'");
+      // } 
       
       candidate.name = newName;
       candidate.email = newEmail;
@@ -166,6 +170,7 @@ const newStatus = req.body.status || "active";
       candidate.typeOfEmployment = newTypeOfEmployment;
       candidate.desiredWorkLocation = newDesiredWorkLocation;
       candidate.status = newStatus;
+      candidate.notes = newNotes;
  
       const updatedCandidate = await candidate.save();
 

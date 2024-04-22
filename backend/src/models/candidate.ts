@@ -45,6 +45,9 @@ const candidateSchema = new Schema(
     status: {
       type: String,
     },
+    notes: {
+      type: String,
+    },
   },
   {
     timestamps: true,

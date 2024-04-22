@@ -8,7 +8,7 @@ export default function Nav() {
   return (
     <Navbar bg="dark" data-bs-theme="dark">
       <Container>
-        <Navbar.Brand href="#home"><Image src="/logo.png" width={35} height={35} alt="Logo"></Image></Navbar.Brand>
+        <Navbar.Brand href=""><Image src="/logo.png" width={35} height={35} alt="ApplicantWizard branding"></Image></Navbar.Brand>
         <Navbar.Brand>ApplicantWizard</Navbar.Brand>
         <Navbar.Toggle />
         <Navbar.Collapse className="justify-content-end">

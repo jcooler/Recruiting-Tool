@@ -1,15 +1,18 @@
 import { Candidate as CandidateModel} from "@/pages/models/candidate";
 import { formatDate } from "@/utils/formatDate";
 import styles from "@styles/candidate.module.css";
+import {MdDelete} from "react-icons/md";
 
 
 interface CandidateProps {
 candidate: CandidateModel;
+ onCandidateClicked: (candidate: CandidateModel) => void; 
+onDeleteCandidate: (candidate: CandidateModel) => void;
 }
 
 
 
-export default function Candidate({candidate}: CandidateProps) {
+export default function Candidate({candidate, onDeleteCandidate, onCandidateClicked}: CandidateProps) {
 
   const {
     name,
@@ -22,7 +25,7 @@ export default function Candidate({candidate}: CandidateProps) {
 
 let createdUpdatedText: string;
 
-//* Pretty cheap operation here, so I don't mind the lack of memoization. If things get more complex, I'd add useEffect or useMemo.
+//* Pretty cheap operation here, so we can afford to optimize it later
 if (updatedAt > createdAt) {
   createdUpdatedText = "Updated: " + formatDate(updatedAt);
 } else {
@@ -32,11 +35,18 @@ if (updatedAt > createdAt) {
   return (
     
 
-  <tr>
+  <tr onClick={() => onCandidateClicked(candidate)}>
     <td>{name}</td>
     <td>{email}</td>
     <td>{createdUpdatedText}</td>
     <td>{status}</td>
+    <td><MdDelete 
+    style={{ cursor: "pointer" }}
+    onClick={ (e) => {
+onDeleteCandidate(candidate);
+e.stopPropagation();
+    }}
+    className="text-muted " /></td>
   </tr>
 
   );

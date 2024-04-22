@@ -41,5 +41,19 @@ export async function createCandidate(candidate: CandidateInput): Promise<Candid
   });
   return response.json();
 
+}
 
+export async function updateCandidate(candidateId: string, candidate: CandidateInput): Promise<Candidate>{
+const response = await fetchData("http://localhost:5001/api/candidates/" + candidateId, {
+method: "PATCH",
+headers: {
+"Content-Type": "application/json",
+},
+body: JSON.stringify(candidate),
+});
+return response.json();
+}
+
+export async function deleteCandidate(candidateId: string) {
+  await fetchData("http://localhost:5001/api/candidates/" + candidateId, {method: "DELETE"})
 }
