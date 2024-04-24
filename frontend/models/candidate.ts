@@ -12,5 +12,7 @@ typeOfEmployment?: string[],
 desiredWorkLocation?: string[],
 status?: string,
 createdAt: string,
-updatedAt: string
+updatedAt: string,
+experience?: number,
+notes?: string,
 }

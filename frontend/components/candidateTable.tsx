@@ -1,8 +1,16 @@
 import Candidate from "./candidate";
 import { Table } from "react-bootstrap";
 import { Container } from "react-bootstrap";
+import { Candidate as CandidateModel } from "@/models/candidate";
 
-export default function CandidateTable({ candidates, onDeleteCandidate, onCandidateClicked }) {
+
+interface CandidateTableProps {
+  candidates: CandidateModel[];
+  onDeleteCandidate: (candidate: CandidateModel) => void;
+  onCandidateClicked: (candidate: CandidateModel) => void;
+}
+
+export default function CandidateTable({ candidates, onDeleteCandidate, onCandidateClicked }: CandidateTableProps) {
   return (
     <Container>
     <Table striped bordered hover responsive>
