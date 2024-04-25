@@ -16,7 +16,7 @@ export async function getLoggedInUser(): Promise<Candidate> {
   const response = await fetchData("http://localhost:5001/api/users/", {
     method: "GET",
   });
-  return await response.json();
+  return response.json();
 }
 
 export interface SignUpCredentials {
@@ -37,6 +37,7 @@ export async function signUp(credentials: SignUpCredentials): Promise<User> {
   });
   return response.json();
 }
+
 
 export interface LoginCredentials {
   username: string;
@@ -62,11 +63,11 @@ method: "POST",
 });
 }
 
-export async function fetchCandidates(): Promise<Candidate> {
+export async function fetchCandidates(): Promise<Candidate []> {
   const response = await fetchData("http://localhost:5001/api/candidates/", {
     method: "GET",
   });
-  return await response.json();
+  return response.json();
 }
 
 export interface CandidateInput {

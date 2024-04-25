@@ -4,7 +4,7 @@ import { SignUpCredentials } from "@/network/candidate-api";
 import * as CandidatesApi from "@/network/candidate-api";
 import { Modal, Form, Button } from "react-bootstrap";
 import TextInputField from "@/components/form/TextInputField";
-import styleUtils from "@/styles/utils.module.css"
+import styleUtils from "@/styles/utils.module.css";
 
 
 interface SignUpProps {

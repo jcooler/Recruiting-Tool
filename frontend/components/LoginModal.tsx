@@ -56,7 +56,7 @@ error={errors.password}
 <Button
 type="submit"
 disabled={isSubmitting}
-className={styleUtils.btn}
+className={styleUtils.width100}
 >
 Login
 </Button>
