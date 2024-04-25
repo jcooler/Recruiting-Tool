@@ -12,7 +12,7 @@ async function fetchData(input: RequestInfo, init?: RequestInit) {
   }
 }
 
-export async function getLoggedInUser(): Promise<Candidate> {
+export async function getLoggedInUser(): Promise<User> {
   const response = await fetchData("http://localhost:5001/api/users/", {
     method: "GET",
   });
