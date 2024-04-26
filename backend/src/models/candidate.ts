@@ -2,6 +2,11 @@ import { InferSchemaType, Schema, model } from "mongoose";
 
 const candidateSchema = new Schema(
   {
+    userId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+   
     name: {
       type: String,
       required: true,

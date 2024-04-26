@@ -90,7 +90,7 @@ const NewEditCandidate = ({
                   <TextInputField
                     name="email"
                     label="Email"
-                    type="text"
+                    type="email"
                     placeholder="email@domain.com"
                     register={register}
                     registerOptions={{ required: "email is required" }}

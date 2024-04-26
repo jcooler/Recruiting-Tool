@@ -2,13 +2,17 @@ import { RequestHandler } from "express";
 import candidateModel from "../models/candidate";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
+import { assertIsDefined } from "../util/assertIsDefined";
 
 
 //* Get all candidates
 export const getCandidates: RequestHandler = async (req, res, next) => {
+
+  const authenticatedUserId = req.session.userId;
   //! try/catch w/ next(error) necessary until express 5.0 release. Express 5.0 will have built-in error handling
   try {
-    const candidates = await candidateModel.find().exec();
+    assertIsDefined(authenticatedUserId);
+    const candidates = await candidateModel.find({userId: authenticatedUserId}).exec();
     res.status(200).json(candidates);
   } catch (error) {
     next(error);
@@ -16,8 +20,9 @@ export const getCandidates: RequestHandler = async (req, res, next) => {
 };
 export const getCandidate: RequestHandler = async (req, res, next) => {
 const candidateId = req.params.candidateId;
-
+const authenticatedUserId = req.session.userId;
 try {
+assertIsDefined(authenticatedUserId);
   if (!mongoose.isValidObjectId(candidateId)) {
 throw createHttpError(400, "Invalid candidate ID");
   }
@@ -25,6 +30,10 @@ const candidate = await candidateModel.findById(candidateId).exec();
 
 if (!candidate) {
 throw createHttpError(404, "Candidate not found");
+}
+
+if (!candidate.userId.equals(authenticatedUserId)) {
+throw createHttpError(401, "You cannot access this candidate.");
 }
 
 res.status(200).json(candidate);
@@ -65,9 +74,9 @@ export const createCandidate: RequestHandler<unknown, unknown, CreateCandidateBo
   const desiredWorkLocation = req.body.desiredWorkLocation;
   const status = req.body.status;
   const notes = req.body.notes;
-
+  const authenticatedUserId = req.session.userId;
   try {
-
+assertIsDefined(authenticatedUserId);
 if (!name) {
   throw createHttpError(400, "Name is required");
 } else if (!email) {
@@ -75,6 +84,7 @@ if (!name) {
 }
 
     const newCandidate = await candidateModel.create({
+      userId: authenticatedUserId,
       name,
       email,
       phone,
@@ -136,7 +146,9 @@ export const updateCandidate: RequestHandler<UpdateCandidateParams, unknown, Upd
 const newDesiredWorkLocation = req.body.desiredWorkLocation ?? [];
 const newStatus = req.body.status || "active";
 const newNotes = req.body.notes;
+const authenticatedUserId = req.session.userId;
   try {
+    assertIsDefined(authenticatedUserId);
   if (!mongoose.isValidObjectId(candidateId)) {
     throw createHttpError(400, "Invalid candidate ID");
       }
@@ -154,9 +166,9 @@ const newNotes = req.body.notes;
         throw createHttpError(404, "Candidate not found");
       }
 
-      // if (newStatus !== "active" && newStatus !== "inactive") {
-      //   throw createHttpError(400, "Invalid status. Status must be 'active' or 'inactive'");
-      // } 
+      if (!candidate.userId.equals(authenticatedUserId)) {
+        throw createHttpError(401, "You cannot access this candidate.");
+      }
       
       candidate.name = newName;
       candidate.email = newEmail;
@@ -184,8 +196,10 @@ const newNotes = req.body.notes;
 
 export const deleteCandidate: RequestHandler = async (req, res, next) => {
   const candidateId = req.params.candidateId;
+  const authenticatedUserId = req.session.userId;
 
   try {
+    assertIsDefined(authenticatedUserId);
     if (!mongoose.isValidObjectId(candidateId)) {
       throw createHttpError(400, "Invalid candidate ID");
     }
@@ -194,6 +208,10 @@ export const deleteCandidate: RequestHandler = async (req, res, next) => {
 
     if (!candidate) {
       throw createHttpError(404, "Candidate not found");
+    }
+
+    if (!candidate.userId.equals(authenticatedUserId)) {
+      throw createHttpError(401, "You cannot access this candidate.");
     }
 
     await candidateModel.deleteOne({ _id: candidateId });

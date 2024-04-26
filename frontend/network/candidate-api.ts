@@ -13,7 +13,7 @@ async function fetchData(input: RequestInfo, init?: RequestInit) {
 }
 
 export async function getLoggedInUser(): Promise<User> {
-  const response = await fetchData("http://localhost:5001/api/users/", {
+  const response = await fetchData("/api/users", {
     method: "GET",
   });
   return response.json();
@@ -28,7 +28,7 @@ export interface SignUpCredentials {
 }
 
 export async function signUp(credentials: SignUpCredentials): Promise<User> {
-  const response = await fetchData("http://localhost:5001/api/users/signup", {
+  const response = await fetchData("/api/users/signup", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export interface LoginCredentials {
 }
 
 export async function login(credentials: LoginCredentials): Promise<User> {
-  const response = await fetchData("http://localhost:5001/api/users/login", {
+  const response = await fetchData("/api/users/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export async function login(credentials: LoginCredentials): Promise<User> {
 }
 
 export async function logout() {
-await fetchData("http://localhost:5001/api/users/logout", {
+await fetchData("/api/users/logout", {
 
 method: "POST",
 
@@ -64,7 +64,7 @@ method: "POST",
 }
 
 export async function fetchCandidates(): Promise<Candidate []> {
-  const response = await fetchData("http://localhost:5001/api/candidates/", {
+  const response = await fetchData("/api/candidates", {
     method: "GET",
   });
   return response.json();
@@ -89,7 +89,7 @@ export interface CandidateInput {
 export async function createCandidate(
   candidate: CandidateInput
 ): Promise<Candidate> {
-  const response = await fetchData("http://localhost:5001/api/candidates/", {
+  const response = await fetchData("/api/candidates", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export async function updateCandidate(
   candidate: CandidateInput
 ): Promise<Candidate> {
   const response = await fetchData(
-    "http://localhost:5001/api/candidates/" + candidateId,
+    "/api/candidates/" + candidateId,
     {
       method: "PATCH",
       headers: {
@@ -117,7 +117,7 @@ export async function updateCandidate(
 }
 
 export async function deleteCandidate(candidateId: string) {
-  await fetchData("http://localhost:5001/api/candidates/" + candidateId, {
+  await fetchData("/api/candidates/" + candidateId, {
     method: "DELETE",
   });
 }

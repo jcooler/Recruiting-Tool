@@ -5,14 +5,10 @@ import bcrypt from 'bcrypt';
 
 export const getAuthenticatedUser: RequestHandler = async (req, res, next) => {
 
-  const authenticatedUserId = req.session.userId;
-
 try {
-  if (!authenticatedUserId) {
-    throw createHttpError(401, 'User not authenticated');
-  }
+ 
 
-  const user = await UserModel.findById(authenticatedUserId).select("+email").exec();
+  const user = await UserModel.findById(req.session.userId).select("+email").exec();
   res.status(200).json(user);
   
 } catch (error) {
@@ -85,16 +81,17 @@ try {
   const user = await UserModel.findOne({ username: username}).select("+password +email").exec();
 
   if (!user) {
-    //* We don't specifically say that the user doesn't exist to avoid giving hints to attackers
+    //* We don't specifically say that the user/password doesn't exist/isn't correct to avoid giving hints to attackers
     throw createHttpError(401, 'Invalid credentials');
   }
 
   const passwordMatch = await bcrypt.compare(password, user.password);
 
+
   if (!passwordMatch) {
     throw createHttpError(401, 'Invalid credentials');
   }
-
+console.log("User ID:", user._id);
   req.session.userId = user._id;
   res.status(201).json(user);
 
@@ -105,11 +102,11 @@ try {
 };
 
 export const logout: RequestHandler = async (req, res, next) => {
-  req.session.destroy((error) => {
+  req.session.destroy(error => {
     if (error) {
       next(error);
     } else {
       res.sendStatus(200);
     }
   });
-}
+};
