@@ -53,6 +53,7 @@ const candidateSchema = new Schema(
     notes: {
       type: String,
     },
+    
   },
   {
     timestamps: true,

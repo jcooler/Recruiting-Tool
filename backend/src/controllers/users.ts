@@ -37,12 +37,12 @@ try {
 const existingUsername = await UserModel.findOne({ username: username }).exec();
 
 if (existingUsername) {
-  throw createHttpError(409, 'Username already exists');
+  throw createHttpError(409, 'Username already exists. Please choose a different name or log in instead.');
 } 
 const existingEmail = await UserModel.findOne({ email: email }).exec();
 
 if (existingEmail) {
-  throw createHttpError(409, 'Email already exists');
+  throw createHttpError(409, 'Email already exists. Please choose a different email or log in instead.');
 }
 
 const passwordHashed = await bcrypt.hash(passwordRaw, 10);
