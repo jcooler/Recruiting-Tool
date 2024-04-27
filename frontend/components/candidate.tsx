@@ -1,5 +1,5 @@
-import { Candidate as CandidateModel } from "@/models/candidate";
-import { formatDate } from "@/utils/formatDate";
+import { Candidate as CandidateModel } from "../models/candidate";
+import { formatDate } from "../utils/formatDate";
 import { MdDelete } from "react-icons/md";
 
 interface CandidateProps {

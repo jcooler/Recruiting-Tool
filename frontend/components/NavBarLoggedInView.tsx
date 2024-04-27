@@ -1,5 +1,5 @@
-import { User } from "@/models/user";
-import * as CandidatesApi from "@/network/candidate-api";
+import { User } from "../models/user";
+import * as CandidatesApi from "../network/candidate-api";
 import { Button, Navbar } from "react-bootstrap";
 
 

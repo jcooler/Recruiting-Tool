@@ -1,9 +1,9 @@
 import { Button, Spinner } from "react-bootstrap";
 import NewEditCandidate from "./newEditCandidate";
 import { useState } from "react";
-import { Candidate as CandidateModel } from "@/models/candidate";
+import { Candidate as CandidateModel } from "../models/candidate";
 import CandidateTable from "./candidateTable";
-import * as CandidatesApi from "@/network/candidate-api";
+import * as CandidatesApi from "../network/candidate-api";
 import { useEffect } from "react";
 
 export default function CandidateLoggedInView() {

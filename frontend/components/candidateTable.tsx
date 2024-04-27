@@ -1,8 +1,8 @@
 import Candidate from "@/components/candidate";
 import { Container, Table, Button, Dropdown, DropdownButton, Row, Col } from "react-bootstrap";
-import { Candidate as CandidateModel } from "@/models/candidate";
+import { Candidate as CandidateModel } from "../models/candidate";
 import { useState } from "react";
-import SearchBar from "@/components/SearchBar";
+import SearchBar from "./SearchBar";
 
 interface CandidateTableProps {
   candidates: CandidateModel[];

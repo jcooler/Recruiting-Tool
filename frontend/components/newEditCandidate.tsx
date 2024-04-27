@@ -1,9 +1,9 @@
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
-import { CandidateInput } from "@/network/candidate-api";
-import * as candidateApi from "@/network/candidate-api";
-import { Candidate } from "@/models/candidate";
-import TextInputField from "@/components/form/TextInputField";
+import { CandidateInput } from "../network/candidate-api";
+import * as candidateApi from "../network/candidate-api";
+import { Candidate } from "../models/candidate";
+import TextInputField from "../components/form/TextInputField";
 
 interface NewEditCandidateProps {
   candidateToEdit?: Candidate;

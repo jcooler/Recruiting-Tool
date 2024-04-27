@@ -1,12 +1,12 @@
-import { User } from "@/models/user";
-import { LoginCredentials } from "@/network/candidate-api";
+import { User } from "../models/user";
+import { LoginCredentials } from "../network/candidate-api";
 import { useForm } from "react-hook-form";
-import * as CandidatesApi from "@/network/candidate-api";
+import * as CandidatesApi from "../network/candidate-api";
 import { Modal, Form, Button, Alert } from "react-bootstrap";
-import TextInputField from "@/components/form/TextInputField";
-import styleUtils from "@/styles/utils.module.css";
+import TextInputField from "../components/form/TextInputField";
+import styleUtils from "../styles/utils.module.css";
 import { useState } from "react";
-import { UnauthorizedError } from "@/errors/https_errors";
+import { UnauthorizedError } from "../errors/https_errors";
 
 interface LoginModalProps {
   onDismiss: () => void;

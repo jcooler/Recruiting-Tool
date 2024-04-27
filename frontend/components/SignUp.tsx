@@ -1,12 +1,12 @@
-import { User } from "@/models/user";
+import { User } from "../models/user";
 import { useForm } from "react-hook-form";
-import { SignUpCredentials } from "@/network/candidate-api";
-import * as CandidatesApi from "@/network/candidate-api";
+import { SignUpCredentials } from "../network/candidate-api";
+import * as CandidatesApi from "../network/candidate-api";
 import { Modal, Form, Button, Alert } from "react-bootstrap";
-import TextInputField from "@/components/form/TextInputField";
-import styleUtils from "@/styles/utils.module.css";
+import TextInputField from "../components/form/TextInputField";
+import styleUtils from "../styles/utils.module.css";
 import { useState } from "react";
-import { ConflictError } from "@/errors/https_errors";
+import { ConflictError } from "../errors/https_errors";
 
 interface SignUpProps {
   onDismiss: () => void;

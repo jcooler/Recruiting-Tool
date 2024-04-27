@@ -1,13 +1,13 @@
 import Head from "next/head";
 import { Inter } from "next/font/google";
-import NavBar from "@/components/NavBar";
+import NavBar from "../components/NavBar";
 import { useState, useEffect } from "react";
-import { User } from "@/models/user";
-import * as CandidatesApi from "@/network/candidate-api";
-import LoginModal from "@/components/LoginModal";
-import SignUp from "@/components/SignUp";
-import CandidateLoggedInView from "@/components/CandidateLoggedInView";
-import CandidateLoggedOutView from "@/components/CandidateLoggedOutView";
+import { User } from "../models/user";
+import * as CandidatesApi from "../network/candidate-api";
+import LoginModal from "../components/LoginModal";
+import SignUp from "../components/SignUp";
+import CandidateLoggedInView from "../components/CandidateLoggedInView";
+import CandidateLoggedOutView from "../components/CandidateLoggedOutView";
 
 const inter = Inter({ subsets: ["latin"] });
 
