@@ -91,7 +91,7 @@ try {
   if (!passwordMatch) {
     throw createHttpError(401, 'Invalid credentials');
   }
-console.log("User ID:", user._id);
+
   req.session.userId = user._id;
   res.status(201).json(user);
 

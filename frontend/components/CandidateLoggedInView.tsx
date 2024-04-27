@@ -19,17 +19,17 @@ export default function CandidateLoggedInView() {
   );
 
   useEffect(() => {
-    console.log("Component rendered");
+   
     async function loadCandidates() {
-      console.log("Loading candidates...");
+  
       try {
         setShowCandidateLoadingError(false);
         setCandidatesLoading(true);
         const candidates = await CandidatesApi.fetchCandidates();
-        console.log("Candidates loaded:", candidates);
+      
         setCandidates(candidates);
       } catch (error) {
-        console.error("Error loading candidates:", error);
+
         console.error(error);
         setShowCandidateLoadingError(true);
       } finally {
