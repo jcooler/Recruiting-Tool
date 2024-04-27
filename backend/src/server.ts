@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 
 
-const port = env.PORT;
+const port = process.env.PORT || env.PORT || 5001;
 
 
 mongoose.connect(env.MONGO_CONNECTION_STRING)
@@ -13,7 +13,7 @@ mongoose.connect(env.MONGO_CONNECTION_STRING)
   console.log("Connected to MongoDB");
 
   app.listen(port, () => {
-    console.log(`Server is running flawlessly on http://localhost:${port}`);
+    console.log(`Server is running flawlessly`);
   });
 })
 .catch(console.error);
