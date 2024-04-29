@@ -1,5 +1,4 @@
 import app from "./app";
-import env from "./util/validateEnv";
 import mongoose from "mongoose";
 
 
@@ -8,7 +7,7 @@ import mongoose from "mongoose";
 const port = process.env.PORT || 5001;
 
 
-mongoose.connect(env.MONGO_CONNECTION_STRING)
+mongoose.connect("mongodb+srv://jcooler:0034affF12121@cluster0.ikkffeu.mongodb.net/ApplicantWizard?retryWrites=true&w=majority&appName=Cluster0")
 .then(() => {
   console.log("Connected to MongoDB");
 
