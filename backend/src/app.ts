@@ -15,7 +15,7 @@ const app = express();
 app.use(cors({
   origin: 'https://applicantwizard.vercel.app',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -32,7 +32,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-      maxAge: 60 * 60 * 1000,
+    maxAge: 60 * 60 * 1000, // 1 hour
+    secure: true, // Set to true if using https
+    httpOnly: true, // Reduces client-side script access to the cookies
+    sameSite: 'lax' // Strict or Lax
   },
   rolling: true,
   store: MongoStore.create({
