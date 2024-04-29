@@ -29,7 +29,7 @@ export default function CandidateTable({ candidates, onDeleteCandidate, onCandid
     }
   };
 
-  // Get current candidates for the current page
+ 
   const indexOfLastCandidate = currentPage * candidatesPerPage;
   const indexOfFirstCandidate = indexOfLastCandidate - candidatesPerPage;
   const currentCandidates = filteredCandidates.slice(indexOfFirstCandidate, indexOfLastCandidate);
@@ -37,7 +37,7 @@ export default function CandidateTable({ candidates, onDeleteCandidate, onCandid
   return (
     <Container>
       <Search onSearch={(query: string) => setSearchQuery(query)} />
-      <Table striped bordered hover responsive="sm"> {/* Use responsive="sm" for smaller table on mobile */}
+      <Table striped bordered hover responsive="sm">
         <thead>
           <tr>
             <th>Name</th>
