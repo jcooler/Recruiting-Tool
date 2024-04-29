@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 
 
-const port = process.env.PORT;
+const port = process.env.PORT || 5001;
 
 
 mongoose.connect(env.MONGO_CONNECTION_STRING)
