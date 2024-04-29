@@ -13,14 +13,14 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-  origin: ["https://recruiting-tool-api.vercel.app/"],
+  origin: ["https://recruiting-tool-api.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
 
 app.use(morgan("dev"));
 
-app.get('/test', (req, res) => {
+app.get('/', (req, res) => {
   res.status(200).send('Test endpoint is working');
 });
 
