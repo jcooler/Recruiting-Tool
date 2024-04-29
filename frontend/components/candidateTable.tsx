@@ -2,7 +2,7 @@ import Candidate from "./candidate";
 import { Container, Table, Button, Dropdown, DropdownButton, Row, Col } from "react-bootstrap";
 import { Candidate as CandidateModel } from "../models/candidate";
 import { useState } from "react";
-
+import Search from "./Search"
 
 interface CandidateTableProps {
   candidates: CandidateModel[];
@@ -36,7 +36,7 @@ export default function CandidateTable({ candidates, onDeleteCandidate, onCandid
 
   return (
     <Container>
-    
+      <Search onSearch={(query: string) => setSearchQuery(query)} />
       <Table striped bordered hover responsive="sm"> {/* Use responsive="sm" for smaller table on mobile */}
         <thead>
           <tr>

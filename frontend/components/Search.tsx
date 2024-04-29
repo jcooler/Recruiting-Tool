@@ -5,7 +5,7 @@ interface SearchBarProps {
   onSearch: (searchQuery: string) => void;
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
+export default function Search({ onSearch }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
