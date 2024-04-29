@@ -12,14 +12,12 @@ import cors from "cors";
 
 const app = express();
 
-const corsOptions = {
-  origin: ['https://applicantwizard.vercel.app'], 
-  credentials: true, 
+app.use(cors({
+  origin: 'https://applicantwizard.vercel.app',
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
-};
-
-app.use(cors(corsOptions));
+}));
 
 app.use(morgan("dev"));
 
