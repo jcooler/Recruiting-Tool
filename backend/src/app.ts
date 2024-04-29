@@ -19,6 +19,10 @@ app.use(cors({
 
 app.use(morgan("dev"));
 
+app.get('/test', (req, res) => {
+  res.status(200).send('Test endpoint is working');
+});
+
 app.use(express.json());
 
 app.use(session({
