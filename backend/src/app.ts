@@ -13,7 +13,7 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-  origin: ["https://applicantwizard.vercel.app"],
+  origin: "https://applicantwizard.vercel.app",
   credentials: true,
 }));
 
