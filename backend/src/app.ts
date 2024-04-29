@@ -5,6 +5,7 @@ import morgan from "morgan";
 import createHttpError, { isHttpError } from "http-errors";
 import userRoutes from "./routes/users";
 import session from "express-session";
+import env from "./util/validateEnv";
 import MongoStore from "connect-mongo";
 import { requiresAuth } from "./middleware/auth";
 import cors from "cors";
@@ -26,7 +27,7 @@ app.get('/', (req, res) => {
 app.use(express.json());
 
 app.use(session({
-  secret: "0034afff",
+  secret: env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -34,7 +35,7 @@ app.use(session({
   },
   rolling: true,
   store: MongoStore.create({
-      mongoUrl: "mongodb+srv://jcooler:0034affF12121@cluster0.ikkffeu.mongodb.net/ApplicantWizard?retryWrites=true&w=majority&appName=Cluster0"
+      mongoUrl: env.MONGO_CONNECTION_STRING
   }),
 }));
 
