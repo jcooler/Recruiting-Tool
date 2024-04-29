@@ -13,7 +13,8 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-  origin: "https://recruiting-tool-api.vercel.app/",
+  origin: ["https://recruiting-tool-api.vercel.app/"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
 
