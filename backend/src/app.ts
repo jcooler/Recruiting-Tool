@@ -34,7 +34,6 @@ app.use(session({
   cookie: {
     maxAge: 60 * 60 * 1000, // 1 hour
     secure: true,
-    httpOnly: true,
     sameSite: 'none' 
   },
   rolling: true,
