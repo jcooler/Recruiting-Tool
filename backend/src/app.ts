@@ -44,7 +44,7 @@ app.use(session({
 }));
 
 app.use("/api/users", userRoutes);
-app.use("/api/candidates", candidatesRoutes);
+app.use("/api/candidates", requiresAuth, candidatesRoutes);
 
 app.use((req, res, next) => {
   next(createHttpError(404,"Not found"));
