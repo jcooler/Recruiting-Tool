@@ -2,8 +2,10 @@ import { Candidate } from "../models/candidate";
 import { User } from "../models/user";
 import { UnauthorizedError, ConflictError } from "../errors/https_errors";
 
+const baseUrl = "https://recruiting-tool-api.vercel.app";
+
 async function fetchData(input: RequestInfo, init?: RequestInit) {
-  const response = await fetch(input, init);
+  const response = await fetch(baseUrl + input, init);
   if (response.ok) {
     return response;
   } else {
@@ -28,6 +30,7 @@ async function fetchData(input: RequestInfo, init?: RequestInit) {
 export async function getLoggedInUser(): Promise<User> {
   const response = await fetchData("/api/users", {
     method: "GET",
+    credentials: 'include',
   });
   return response.json();
 }
