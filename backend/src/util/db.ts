@@ -7,7 +7,7 @@ async function connectDB() {
     return db;
   }
 
-  const connectionString = process.env.MONGO_CONNECTION_STRING;
+  const connectionString = process.env.MONGODB_URI;
   if (!connectionString) {
     throw new Error("MongoDB connection string is not defined in environment variables.");
   }

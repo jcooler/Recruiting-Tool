@@ -39,7 +39,7 @@ app.use(session({
   },
   rolling: true,
   store: MongoStore.create({
-      mongoUrl: env.MONGO_CONNECTION_STRING
+      mongoUrl: env.MONGODB_URI
   }),
 }));
 
