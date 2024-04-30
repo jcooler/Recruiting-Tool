@@ -1,36 +1,42 @@
-import { Candidate } from "../models/candidate";
+import { Candidate} from "../models/candidate";
 import { User } from "../models/user";
 import { UnauthorizedError, ConflictError } from "../errors/https_errors";
 
 const baseUrl = "https://recruiting-tool-api.vercel.app";
 
-async function fetchData(input: RequestInfo, init?: RequestInit) {
-  const response = await fetch(baseUrl + input, init);
-  if (response.ok) {
-    return response;
-  } else {
-    const errorBody = await response.json();
-    const errorMessage = errorBody.error;
+function initFetch(init?: RequestInit): RequestInit {
+  // Ensure headers are always defined as an object
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
 
-    if (response.status === 401) {
-      throw new UnauthorizedError(errorMessage);
-    } else if (response.status === 409) {
-      throw new ConflictError(errorMessage);
-    } else {
-      throw Error(
-        "Request failed with status: " +
-          response.status +
-          " message:" +
-          errorMessage
-      );
+  return {
+    ...init,
+    headers: headers,
+    credentials: 'include',  // Include cookies with the request
+  };
+}
+
+async function fetchData(input: RequestInfo, init?: RequestInit) {
+  const response = await fetch(baseUrl + input, initFetch(init));
+  if (!response.ok) {
+    const errorBody = await response.json();
+    const errorMessage = errorBody.error || 'Unknown error occurred';
+
+    switch (response.status) {
+      case 401:
+        throw new UnauthorizedError(errorMessage);
+      case 409:
+        throw new ConflictError(errorMessage);
+      default:
+        throw new Error(`Request failed with status: ${response.status} message: ${errorMessage}`);
     }
   }
+  return response;
 }
 
 export async function getLoggedInUser(): Promise<User> {
   const response = await fetchData("/api/users", {
-    method: "GET",
-    credentials: 'include',
+    method: "GET"
   });
   return response.json();
 }
@@ -44,10 +50,7 @@ export interface SignUpCredentials {
 export async function signUp(credentials: SignUpCredentials): Promise<User> {
   const response = await fetchData("/api/users/signup", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
+    body: JSON.stringify(credentials)
   });
   return response.json();
 }
@@ -60,23 +63,20 @@ export interface LoginCredentials {
 export async function login(credentials: LoginCredentials): Promise<User> {
   const response = await fetchData("/api/users/login", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
+    body: JSON.stringify(credentials)
   });
   return response.json();
 }
 
 export async function logout() {
   await fetchData("/api/users/logout", {
-    method: "POST",
+    method: "POST"
   });
 }
 
 export async function fetchCandidates(): Promise<Candidate[]> {
   const response = await fetchData("/api/candidates", {
-    method: "GET",
+    method: "GET"
   });
   return response.json();
 }
@@ -97,35 +97,24 @@ export interface CandidateInput {
   notes?: string;
 }
 
-export async function createCandidate(
-  candidate: CandidateInput
-): Promise<Candidate> {
+export async function createCandidate(candidate: CandidateInput): Promise<Candidate> {
   const response = await fetchData("/api/candidates", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(candidate),
+    body: JSON.stringify(candidate)
   });
   return response.json();
 }
 
-export async function updateCandidate(
-  candidateId: string,
-  candidate: CandidateInput
-): Promise<Candidate> {
+export async function updateCandidate(candidateId: string, candidate: CandidateInput): Promise<Candidate> {
   const response = await fetchData("/api/candidates/" + candidateId, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(candidate),
+    body: JSON.stringify(candidate)
   });
   return response.json();
 }
 
 export async function deleteCandidate(candidateId: string) {
   await fetchData("/api/candidates/" + candidateId, {
-    method: "DELETE",
+    method: "DELETE"
   });
 }
