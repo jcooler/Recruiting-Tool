@@ -8,12 +8,12 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/api/index.ts"
+      "dest": "pages/index.tsx",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*"
+      }
     }
   ]
 }
