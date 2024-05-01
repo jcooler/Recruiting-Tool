@@ -33,9 +33,6 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     maxAge: 60 * 60 * 1000, // 1 hour
-    sameSite: 'none',
-    httpOnly: true,
-    secure: true,
   },
   rolling: true,
   store: MongoStore.create({
