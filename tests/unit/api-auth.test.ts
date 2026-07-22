@@ -55,4 +55,16 @@ describe("auth routes", () => {
     const meRes = await me(apiReq("GET", "/api/users/me", { token }), P);
     expect(meRes.status).toBe(401);
   });
+
+  it("signup dedupes email case-insensitively with a 409", async () => {
+    await signup(apiReq("POST", "/api/users/signup", { body: { username: "casea", email: "case@x.com", password: "longenough1" } }), P);
+    const res = await signup(apiReq("POST", "/api/users/signup", { body: { username: "caseb", email: "CASE@x.com", password: "longenough1" } }), P);
+    expect(res.status).toBe(409);
+  });
+
+  it("login returns 401 for unknown users (bcrypt path exercised)", async () => {
+    const res = await login(apiReq("POST", "/api/users/login", { body: { username: "nobody-here", password: "whatever-123" } }), P);
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe("Invalid credentials");
+  });
 });

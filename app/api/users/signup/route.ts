@@ -23,11 +23,20 @@ export const POST = withPublic(
     }
 
     const workspace = await WorkspaceModel.create({ name: `${username}'s workspace` });
-    const user = await UserModel.create({
-      username, email,
-      passwordHash: await bcrypt.hash(password, 10),
-      workspaceId: workspace._id, role: "admin",
-    });
+    let user;
+    try {
+      user = await UserModel.create({
+        username, email,
+        passwordHash: await bcrypt.hash(password, 10),
+        workspaceId: workspace._id, role: "admin",
+      });
+    } catch (err) {
+      await WorkspaceModel.deleteOne({ _id: workspace._id });
+      if (err instanceof Error && "code" in err && (err as { code?: number }).code === 11000) {
+        throw new ApiError(409, "Email already exists. Please choose a different email or log in instead.");
+      }
+      throw err;
+    }
 
     const { token, expiresAt } = await createSession(user._id.toString());
     const dto: UserDto = {
