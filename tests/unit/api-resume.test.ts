@@ -65,4 +65,52 @@ describe("POST /api/resumes/parse", () => {
 
     expect(res.status).toBe(403);
   });
+
+  it("a corrupt PDF (valid magic bytes, garbage body) is rejected with 422", async () => {
+    const { token } = await makeUser("recruiter");
+    const buf = Buffer.concat([Buffer.from("%PDF-"), Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0x10, 0x20])]);
+
+    const res = await POST(formReq(buf, "resume.pdf", token), P);
+
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.error).toBe("Couldn't read that file — it may be corrupted or image-only");
+  });
+
+  it("a corrupt DOCX (valid zip magic bytes, garbage body) is rejected with 422", async () => {
+    const { token } = await makeUser("recruiter");
+    const buf = Buffer.concat([
+      Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0x10, 0x20]),
+    ]);
+
+    const res = await POST(formReq(buf, "resume.docx", token), P);
+
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.error).toBe("Couldn't read that file — it may be corrupted or image-only");
+  });
+
+  it("a file over 5 MB is rejected with 413", async () => {
+    const { token } = await makeUser("recruiter");
+    const oversized = Buffer.alloc(5 * 1024 * 1024 + 1);
+    Buffer.from("%PDF-").copy(oversized, 0);
+
+    const res = await POST(formReq(oversized, "resume.pdf", token), P);
+
+    expect(res.status).toBe(413);
+    const body = await res.json();
+    expect(body.error).toBe("File too large (max 5 MB)");
+  });
+
+  it("a PDF with under 20 characters of extractable text is rejected with 422", async () => {
+    const { token } = await makeUser("recruiter");
+    const buf = await makePdf("Hi");
+
+    const res = await POST(formReq(buf, "resume.pdf", token), P);
+
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.error).toBe("Couldn't read any text from that file");
+  });
 });
