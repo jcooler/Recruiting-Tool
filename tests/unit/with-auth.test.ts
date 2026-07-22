@@ -79,4 +79,27 @@ describe("withAuth", () => {
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBeTruthy();
   });
+
+  it("rejects malformed Origin headers on mutations", async () => {
+    const { token } = await makeUser("admin");
+    const res = await ok(req("POST", token, { origin: "not a url" }), route);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns the generic 401 for a session whose user was deleted", async () => {
+    const { user, token } = await makeUser("admin");
+    await UserModel.deleteOne({ _id: user._id });
+    const res = await ok(req("GET", token), route);
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe("You must be logged in to access this resource");
+  });
+
+  it("returns the generic 401 (never a role 403) when the workspace is gone", async () => {
+    const { user, token } = await makeUser("interviewer");
+    await WorkspaceModel.deleteOne({ _id: user.workspaceId });
+    const guarded = withAuth(async () => Response.json({ ok: true }), { minRole: "recruiter" });
+    const res = await guarded(req("POST", token), route);
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe("You must be logged in to access this resource");
+  });
 });

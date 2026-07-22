@@ -28,6 +28,9 @@ async function runGuards(req: NextRequest, opts?: Guard): Promise<Response | nul
   if (MUTATING.has(req.method)) {
     const origin = req.headers.get("origin");
     const host = req.headers.get("host");
+    if (origin && !host) {
+      return jsonError(403, "Cross-origin request rejected");
+    }
     if (origin && host) {
       try {
         if (new URL(origin).host !== host) return jsonError(403, "Cross-origin request rejected");
@@ -76,12 +79,12 @@ export function withAuth(handler: AuthedHandler, opts?: Guard & { minRole?: Role
       const user = await UserModel.findById(userId).exec();
       if (!user) throw new ApiError(401, "You must be logged in to access this resource");
 
+      const workspace = await WorkspaceModel.findById(user.workspaceId).exec();
+      if (!workspace) throw new ApiError(401, "You must be logged in to access this resource");
+
       if (opts?.minRole && roleRank[user.role as Role] < roleRank[opts.minRole]) {
         throw new ApiError(403, "Insufficient role for this action");
       }
-
-      const workspace = await WorkspaceModel.findById(user.workspaceId).exec();
-      if (!workspace) throw new ApiError(401, "Workspace no longer exists");
 
       return await handler(req, {
         user: {
