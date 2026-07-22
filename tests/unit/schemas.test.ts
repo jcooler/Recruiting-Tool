@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { loginSchema, signUpSchema } from "@/lib/schemas/auth";
-import { createCandidateSchema, stageMoveSchema, candidateListQuerySchema } from "@/lib/schemas/candidate";
+import { createCandidateSchema, stageMoveSchema, candidateListQuerySchema, updateCandidateSchema, noteSchema, ratingSchema, memberRoleSchema } from "@/lib/schemas/candidate";
+import { createJobSchema, updateJobSchema } from "@/lib/schemas/job";
 import { objectIdSchema } from "@/lib/schemas/common";
 
 describe("auth schemas", () => {
@@ -41,5 +43,32 @@ describe("candidate schemas", () => {
     });
     expect(valid.success).toBe(true);
     expect(createCandidateSchema.safeParse({ jobId: "507f1f77bcf86cd799439011", name: "A", email: "nope", source: "referral", stage: "applied" }).success).toBe(false);
+  });
+});
+
+describe("injection hardening applies to every schema", () => {
+  const validSamples: [string, z.ZodTypeAny, Record<string, unknown>][] = [
+    ["signUpSchema", signUpSchema, { username: "jon", email: "j@x.com", password: "longenough1" }],
+    ["loginSchema", loginSchema, { username: "jon", password: "longenough1" }],
+    ["createJobSchema", createJobSchema, { title: "T", department: "D", location: "L", employmentType: "full-time" }],
+    ["updateJobSchema", updateJobSchema, { title: "T" }],
+    ["createCandidateSchema", createCandidateSchema, { jobId: "507f1f77bcf86cd799439011", name: "A", email: "a@x.com", source: "referral", stage: "applied" }],
+    ["updateCandidateSchema", updateCandidateSchema, { name: "A" }],
+    ["stageMoveSchema", stageMoveSchema, { stage: "offer" }],
+    ["noteSchema", noteSchema, { body: "hello" }],
+    ["ratingSchema", ratingSchema, { rating: 3 }],
+    ["memberRoleSchema", memberRoleSchema, { role: "admin" }],
+  ];
+
+  it.each(validSamples)("%s rejects unknown/$-operator keys", (_name, schema, valid) => {
+    expect(schema.safeParse(valid).success).toBe(true);
+    expect(schema.safeParse({ ...valid, $where: "1" }).success).toBe(false);
+    expect(schema.safeParse({ ...valid, injected: true }).success).toBe(false);
+  });
+
+  it.each(validSamples)("%s rejects operator objects replacing string values", (_name, schema, valid) => {
+    const firstStringKey = Object.entries(valid).find(([, v]) => typeof v === "string")?.[0];
+    if (!firstStringKey) return;
+    expect(schema.safeParse({ ...valid, [firstStringKey]: { $ne: "" } }).success).toBe(false);
   });
 });
