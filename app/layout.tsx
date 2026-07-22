@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const theme = (await cookies()).get(THEME_COOKIE)?.value;
+  const raw = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = raw === "light" || raw === "dark" ? raw : undefined;
 
   return (
     <html lang="en" data-theme={theme} suppressHydrationWarning>

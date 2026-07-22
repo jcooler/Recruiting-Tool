@@ -47,7 +47,9 @@ function MoonIcon() {
  * needs to guess the visitor's theme.
  */
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(() =>
+    typeof document !== "undefined" && document.documentElement.dataset.theme === "dark" ? "dark" : "light"
+  );
 
   useEffect(() => {
     const current = document.documentElement.dataset.theme;
