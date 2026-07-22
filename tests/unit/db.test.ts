@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import mongoose from "mongoose";
 import { setupTestDb } from "../helpers/db";
 
@@ -11,5 +11,14 @@ describe("dbConnect", () => {
     const b = await dbConnect();
     expect(a).toBe(b);
     expect(mongoose.connection.readyState).toBe(1);
+  });
+
+  it("survives a module registry reset (hot-reload) via globalThis cache", async () => {
+    const { dbConnect } = await import("@/lib/db");
+    const first = await dbConnect();
+    vi.resetModules();
+    const fresh = await import("@/lib/db");
+    const second = await fresh.dbConnect();
+    expect(second).toBe(first);
   });
 });

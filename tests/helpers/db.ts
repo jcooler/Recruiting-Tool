@@ -11,6 +11,8 @@ export function setupTestDb() {
     vi.stubEnv("SESSION_SECRET", "test-secret-".padEnd(32, "x"));
     const { resetEnvCache } = await import("@/lib/env");
     resetEnvCache();
+    const { resetDbCache } = await import("@/lib/db");
+    resetDbCache();
     const { dbConnect } = await import("@/lib/db");
     await dbConnect();
   });
@@ -22,6 +24,8 @@ export function setupTestDb() {
 
   afterAll(async () => {
     await mongoose.disconnect();
+    const { resetDbCache } = await import("@/lib/db");
+    resetDbCache();
     await mongod.stop();
     vi.unstubAllEnvs();
   });
