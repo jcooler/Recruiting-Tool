@@ -200,7 +200,8 @@ function buildCandidate(
   jobId: Types.ObjectId,
   actorId: Types.ObjectId,
   bucket: Bucket,
-  now: number
+  now: number,
+  jobTitle: string
 ): SeedCandidate {
   const name = faker.person.fullName();
   const finalStage: Stage = bucket === "rejected" ? faker.helpers.arrayElement(STAGES) : bucket;
@@ -208,7 +209,7 @@ function buildCandidate(
   const appliedAt = stageHistory[0].enteredAt;
 
   const activity: SeedCandidate["activity"] = [
-    { type: "created", actorId, actorName: DEMO_ACTOR_NAME, meta: `added to job`, createdAt: appliedAt },
+    { type: "created", actorId, actorName: DEMO_ACTOR_NAME, meta: `added to ${jobTitle}`, createdAt: appliedAt },
   ];
   const noteCount = faker.number.int({ min: 0, max: 2 });
   const notes: SeedCandidate["notes"] = [];
@@ -273,7 +274,7 @@ export async function seedWorkspace(
     for (const { bucket } of BUCKET_WEIGHTS) {
       const count = buckets[bucket];
       for (let k = 0; k < count; k++) {
-        candidateDocs.push(buildCandidate(wsId, job._id, actorId, bucket, now));
+        candidateDocs.push(buildCandidate(wsId, job._id, actorId, bucket, now, job.title));
       }
     }
   });
