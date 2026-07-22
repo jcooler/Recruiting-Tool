@@ -1,0 +1,37 @@
+import { NextRequest } from "next/server";
+import bcrypt from "bcrypt";
+import UserModel from "@/models/user";
+import WorkspaceModel from "@/models/workspace";
+import { ApiError } from "@/lib/api-error";
+import { RATE_LIMITS } from "@/lib/rate-limit";
+import { loginSchema } from "@/lib/schemas/auth";
+import { createSession, serializeSessionCookie } from "@/lib/session";
+import { withPublic } from "@/lib/with-auth";
+import type { UserDto } from "@/lib/dto";
+import type { Role } from "@/lib/types";
+
+export const runtime = "nodejs";
+
+export const POST = withPublic(
+  async (req: NextRequest) => {
+    const { username, password } = loginSchema.parse(await req.json());
+
+    const user = await UserModel.findOne({ username }).select("+passwordHash +email").exec();
+    // Generic message either way - do not reveal which part failed (ported behavior).
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new ApiError(401, "Invalid credentials");
+    }
+    const workspace = await WorkspaceModel.findById(user.workspaceId).exec();
+    if (!workspace) throw new ApiError(401, "Invalid credentials");
+
+    const { token, expiresAt } = await createSession(user._id.toString());
+    const dto: UserDto = {
+      id: user._id.toString(), username: user.username, email: user.email,
+      role: user.role as Role, workspaceId: user.workspaceId.toString(),
+      isDemo: workspace.isDemo, workspaceName: workspace.name,
+      ...(workspace.expiresAt ? { demoExpiresAt: workspace.expiresAt.toISOString() } : {}),
+    };
+    return Response.json(dto, { status: 200, headers: { "Set-Cookie": serializeSessionCookie(token, expiresAt) } });
+  },
+  { rateLimit: { ...RATE_LIMITS.auth, scope: "login" } }
+);
