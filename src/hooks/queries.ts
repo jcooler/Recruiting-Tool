@@ -295,6 +295,29 @@ export interface MoveStagePayload {
   rejected?: boolean;
 }
 
+// Pure, exported for unit testing. `setQueriesData({ queryKey: ["candidates"] })`
+// uses TanStack Query's prefix matching, so it also matches the candidate-detail
+// cache entry (queryKeys.candidate -> ["candidates", "detail", id]), whose cached
+// value is a single CandidateDto object rather than an array. Guard against that
+// shape here so a cached detail view can't make `.map` throw and silently abort
+// the whole mutation (the detail cache itself is refreshed by onSettled's
+// invalidation instead).
+export function applyStageMove(
+  cache: unknown,
+  candidateId: string,
+  patch: { stage?: Stage; rejected?: boolean }
+): unknown {
+  if (!Array.isArray(cache)) return cache;
+  return cache.map((c: CandidateDto) =>
+    c.id === candidateId
+      ? {
+          ...c,
+          ...(patch.stage !== undefined ? { stage: patch.stage, rejected: false } : { rejected: patch.rejected! }),
+        }
+      : c
+  );
+}
+
 export function useMoveStage() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -304,16 +327,12 @@ export function useMoveStage() {
       await queryClient.cancelQueries({ queryKey: ["candidates"] });
       const previous = queryClient.getQueriesData<CandidateDto[]>({ queryKey: ["candidates"] });
       queryClient.setQueriesData<CandidateDto[]>({ queryKey: ["candidates"] }, (old) =>
-        old?.map((c) =>
-          c.id === candidateId
-            ? { ...c, ...(stage !== undefined ? { stage, rejected: false } : { rejected: rejected! }) }
-            : c
-        )
+        applyStageMove(old, candidateId, { stage, rejected }) as CandidateDto[] | undefined
       );
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      ctx?.previous.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      ctx?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
       toast({ title: "Couldn't move candidate", description: "Your change was rolled back.", variant: "error" });
     },
     onSettled: () => {
