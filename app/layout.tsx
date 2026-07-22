@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/components/theme/theme-script";
 import { THEME_COOKIE } from "@/lib/theme";
 import "./globals.css";
@@ -18,7 +19,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <ThemeScript />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
