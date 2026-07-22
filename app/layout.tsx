@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { ThemeScript } from "@/components/theme/theme-script";
+import { THEME_COOKIE } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,9 +9,14 @@ export const metadata: Metadata = {
   description: "A modern applicant tracking system.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = (await cookies()).get(THEME_COOKIE)?.value;
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme} suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body>{children}</body>
     </html>
   );
