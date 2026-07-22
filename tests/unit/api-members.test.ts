@@ -89,4 +89,14 @@ describe("PATCH /api/workspace/members/[userId]", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("blocks self role change even with uppercase ObjectId casing", async () => {
+    const { user, token } = await makeUser("admin");
+    const res = await patchMember(
+      apiReq("PATCH", `/api/workspace/members/${user._id.toString().toUpperCase()}`, { token, body: { role: "recruiter" } }),
+      routeParams({ userId: user._id.toString().toUpperCase() })
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("You cannot change your own role");
+  });
 });
