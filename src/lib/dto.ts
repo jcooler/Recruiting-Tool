@@ -83,7 +83,7 @@ interface CandidateDoc {
   }[];
   resume?: {
     text: string;
-    parsedFields: { name?: string | null; email?: string | null; phone?: string | null; skills: string[] };
+    parsedFields?: { name?: string | null; email?: string | null; phone?: string | null; skills: string[] } | null;
     parsedAt: Date;
   } | null;
   createdAt: Date;
@@ -143,10 +143,10 @@ export function toCandidateDto(doc: CandidateDoc): CandidateDto {
           resume: {
             text: doc.resume.text,
             parsedFields: {
-              ...(doc.resume.parsedFields.name != null ? { name: doc.resume.parsedFields.name } : {}),
-              ...(doc.resume.parsedFields.email != null ? { email: doc.resume.parsedFields.email } : {}),
-              ...(doc.resume.parsedFields.phone != null ? { phone: doc.resume.parsedFields.phone } : {}),
-              skills: doc.resume.parsedFields.skills,
+              ...(doc.resume.parsedFields?.name != null ? { name: doc.resume.parsedFields.name } : {}),
+              ...(doc.resume.parsedFields?.email != null ? { email: doc.resume.parsedFields.email } : {}),
+              ...(doc.resume.parsedFields?.phone != null ? { phone: doc.resume.parsedFields.phone } : {}),
+              skills: doc.resume.parsedFields?.skills ?? [],
             },
             parsedAt: doc.resume.parsedAt.toISOString(),
           },
