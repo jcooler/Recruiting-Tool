@@ -25,4 +25,13 @@ describe("consumeRateLimit", () => {
     await new Promise((r) => setTimeout(r, 80));
     expect((await consumeRateLimit("c", 1, 50)).allowed).toBe(true);
   });
+
+  it("admits exactly `limit` requests under concurrent load on a fresh key", async () => {
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => consumeRateLimit("burst", 5, 60_000))
+    );
+    const allowed = results.filter((r) => r.allowed).length;
+    expect(allowed).toBe(5);
+    expect(results.filter((r) => !r.allowed).length).toBe(5);
+  });
 });

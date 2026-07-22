@@ -13,27 +13,52 @@ export type RateLimitConfig = { limit: number; windowMs: number };
 export async function consumeRateLimit(key: string, limit: number, windowMs: number) {
   await dbConnect();
   const now = new Date();
+  const windowFloor = new Date(now.getTime() - windowMs);
 
-  // Try to increment an active window atomically.
-  const active = await RateLimitModel.findOneAndUpdate(
-    { key, windowStart: { $gt: new Date(now.getTime() - windowMs) } },
-    { $inc: { count: 1 } },
-    { new: true }
-  ).exec();
+  // Single atomic increment via an aggregation-pipeline update + upsert:
+  // no separate check-then-write, so there's no gap for a second instance
+  // to race the window-boundary decision or the first-ever insert.
+  const attempt = () =>
+    RateLimitModel.findOneAndUpdate(
+      { key },
+      [
+        {
+          $set: {
+            count: {
+              $cond: [{ $gt: ["$windowStart", windowFloor] }, { $add: ["$count", 1] }, 1],
+            },
+            expiresAt: {
+              $cond: [
+                { $gt: ["$windowStart", windowFloor] },
+                "$expiresAt",
+                new Date(now.getTime() + windowMs * 2),
+              ],
+            },
+            windowStart: {
+              $cond: [{ $gt: ["$windowStart", windowFloor] }, "$windowStart", now],
+            },
+          },
+        },
+      ],
+      { new: true, upsert: true }
+    ).exec();
 
-  if (active) {
-    if (active.count > limit) {
-      const resetAt = active.windowStart.getTime() + windowMs;
-      return { allowed: false, retryAfterSec: Math.max(1, Math.ceil((resetAt - now.getTime()) / 1000)) };
+  let doc;
+  try {
+    doc = await attempt();
+  } catch (err) {
+    // Two first-ever writers can race the upsert insert on the unique key
+    // index; the loser gets E11000 and retries onto the now-existing doc.
+    if (err instanceof Error && "code" in err && (err as { code?: number }).code === 11000) {
+      doc = await attempt();
+    } else {
+      throw err;
     }
-    return { allowed: true, retryAfterSec: 0 };
   }
 
-  // No active window: start a fresh one (upsert replaces a lapsed doc).
-  await RateLimitModel.updateOne(
-    { key },
-    { $set: { count: 1, windowStart: now, expiresAt: new Date(now.getTime() + windowMs * 2) } },
-    { upsert: true }
-  ).exec();
+  if (doc.count > limit) {
+    const resetAt = doc.windowStart.getTime() + windowMs;
+    return { allowed: false, retryAfterSec: Math.max(1, Math.ceil((resetAt - now.getTime()) / 1000)) };
+  }
   return { allowed: true, retryAfterSec: 0 };
 }
