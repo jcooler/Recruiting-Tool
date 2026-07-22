@@ -107,8 +107,8 @@ export function toCandidateDto(doc: CandidateDoc): CandidateDto {
     jobId: doc.jobId.toString(),
     name: doc.name,
     email: doc.email,
-    ...(doc.phone ? { phone: doc.phone } : {}),
-    ...(doc.location ? { location: doc.location } : {}),
+    ...(doc.phone != null ? { phone: doc.phone } : {}),
+    ...(doc.location != null ? { location: doc.location } : {}),
     avatarSeed: doc.avatarSeed,
     source: doc.source,
     stage: doc.stage,
@@ -121,10 +121,10 @@ export function toCandidateDto(doc: CandidateDoc): CandidateDto {
       company: e.company,
       title: e.title,
       startDate: e.startDate.toISOString(),
-      ...(e.endDate ? { endDate: e.endDate.toISOString() } : {}),
+      ...(e.endDate != null ? { endDate: e.endDate.toISOString() } : {}),
     })),
-    ...(doc.education ? { education: doc.education } : {}),
-    ...(doc.desiredPay ? { desiredPay: doc.desiredPay } : {}),
+    ...(doc.education != null ? { education: doc.education } : {}),
+    ...(doc.desiredPay != null ? { desiredPay: doc.desiredPay } : {}),
     notes: doc.notes.map((n) => ({
       authorId: n.authorId.toString(),
       authorName: n.authorName,
@@ -138,14 +138,14 @@ export function toCandidateDto(doc: CandidateDoc): CandidateDto {
       meta: a.meta,
       createdAt: a.createdAt.toISOString(),
     })),
-    ...(doc.resume
+    ...(doc.resume != null
       ? {
           resume: {
             text: doc.resume.text,
             parsedFields: {
-              ...(doc.resume.parsedFields.name ? { name: doc.resume.parsedFields.name } : {}),
-              ...(doc.resume.parsedFields.email ? { email: doc.resume.parsedFields.email } : {}),
-              ...(doc.resume.parsedFields.phone ? { phone: doc.resume.parsedFields.phone } : {}),
+              ...(doc.resume.parsedFields.name != null ? { name: doc.resume.parsedFields.name } : {}),
+              ...(doc.resume.parsedFields.email != null ? { email: doc.resume.parsedFields.email } : {}),
+              ...(doc.resume.parsedFields.phone != null ? { phone: doc.resume.parsedFields.phone } : {}),
               skills: doc.resume.parsedFields.skills,
             },
             parsedAt: doc.resume.parsedAt.toISOString(),
@@ -167,6 +167,6 @@ export function toJobDto(doc: JobDoc, counts?: Record<Stage, number>): JobDto {
     status: doc.status,
     description: doc.description,
     createdAt: doc.createdAt.toISOString(),
-    ...(counts ? { counts } : {}),
+    ...(counts != null ? { counts } : {}),
   };
 }
