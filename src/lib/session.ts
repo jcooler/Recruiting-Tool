@@ -10,6 +10,13 @@ function hash(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Creates a server-side session. The returned `expiresAt` is the ABSOLUTE cap
+ * and is intended for the cookie's Expires attribute: the cookie must outlive
+ * idle gaps so the 1h rolling idle timeout can be enforced server-side via the
+ * session document (which is what actually logs users out). Do not use the
+ * return value as the current idle expiry.
+ */
 export async function createSession(userId: string, opts?: { absoluteMs?: number }) {
   await dbConnect();
   const token = randomBytes(32).toString("hex");
