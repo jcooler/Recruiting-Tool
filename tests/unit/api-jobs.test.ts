@@ -33,7 +33,7 @@ describe("jobs routes", () => {
     expect(postRes.status).toBe(403);
   });
 
-  it("list includes per-stage candidate counts", async () => {
+  it("list includes per-stage candidate counts, excluding rejected candidates", async () => {
     const { token, user, workspace } = await makeUser("recruiter");
     const createRes = await POST(apiReq("POST", "/api/jobs", { token, body: jobBody }), P);
     const job = await createRes.json();
@@ -50,16 +50,35 @@ describe("jobs routes", () => {
       workspaceId: workspace._id, jobId: job.id, name: "Carol", email: "carol@x.com",
       avatarSeed: "carol", source: "referral", stage: "offer", createdBy: user._id,
     });
+    await CandidateModel.create({
+      workspaceId: workspace._id, jobId: job.id, name: "Erin", email: "erin@x.com",
+      avatarSeed: "erin", source: "referral", stage: "offer", createdBy: user._id, rejected: true,
+    });
 
     const listRes = await GET(apiReq("GET", "/api/jobs", { token }), P);
     expect(listRes.status).toBe(200);
     const jobs = await listRes.json();
     const found = jobs.find((j: { id: string }) => j.id === job.id);
     expect(found.counts.applied).toBe(2);
+    // Erin is rejected, so the offer count must stay at 1, not 2.
     expect(found.counts.offer).toBe(1);
     expect(found.counts.screening).toBe(0);
     expect(found.counts.interview).toBe(0);
     expect(found.counts.hired).toBe(0);
+  });
+
+  it("list is sorted by createdAt desc", async () => {
+    const { token } = await makeUser("recruiter");
+    const resA = await POST(apiReq("POST", "/api/jobs", { token, body: { ...jobBody, title: "Job A" } }), P);
+    const jobA = await resA.json();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const resB = await POST(apiReq("POST", "/api/jobs", { token, body: { ...jobBody, title: "Job B" } }), P);
+    const jobB = await resB.json();
+
+    const listRes = await GET(apiReq("GET", "/api/jobs", { token }), P);
+    expect(listRes.status).toBe(200);
+    const jobs = await listRes.json();
+    expect(jobs.map((j: { id: string }) => j.id)).toEqual([jobB.id, jobA.id]);
   });
 
   it("GET by id from another workspace's user returns 404", async () => {
@@ -89,14 +108,24 @@ describe("jobs routes", () => {
     expect(updated.title).toBe("Staff Engineer");
   });
 
-  it("DELETE removes the job and cascades to its candidates", async () => {
+  it("DELETE removes the job and cascades to its candidates, without touching another job's candidates", async () => {
     const { token, user, workspace } = await makeUser("recruiter");
     const createRes = await POST(apiReq("POST", "/api/jobs", { token, body: jobBody }), P);
     const job = await createRes.json();
 
+    const otherCreateRes = await POST(
+      apiReq("POST", "/api/jobs", { token, body: { ...jobBody, title: "Other Job" } }),
+      P
+    );
+    const otherJob = await otherCreateRes.json();
+
     await CandidateModel.create({
       workspaceId: workspace._id, jobId: job.id, name: "Dana", email: "dana@x.com",
       avatarSeed: "dana", source: "referral", stage: "applied", createdBy: user._id,
+    });
+    await CandidateModel.create({
+      workspaceId: workspace._id, jobId: otherJob.id, name: "Eve", email: "eve@x.com",
+      avatarSeed: "eve", source: "referral", stage: "applied", createdBy: user._id,
     });
 
     const res = await deleteJob(
@@ -107,6 +136,11 @@ describe("jobs routes", () => {
 
     const remainingCandidates = await CandidateModel.countDocuments({ jobId: job.id });
     expect(remainingCandidates).toBe(0);
+
+    // The other job (same workspace) must be untouched — proves deleteMany
+    // is scoped by jobId, not just workspaceId.
+    const otherJobCandidates = await CandidateModel.countDocuments({ jobId: otherJob.id });
+    expect(otherJobCandidates).toBe(1);
 
     const getRes = await getJob(
       apiReq("GET", `/api/jobs/${job.id}`, { token }),
