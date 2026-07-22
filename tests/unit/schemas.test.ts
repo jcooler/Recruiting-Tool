@@ -58,6 +58,7 @@ describe("injection hardening applies to every schema", () => {
     ["noteSchema", noteSchema, { body: "hello" }],
     ["ratingSchema", ratingSchema, { rating: 3 }],
     ["memberRoleSchema", memberRoleSchema, { role: "admin" }],
+    ["candidateListQuerySchema", candidateListQuerySchema, { search: "ali", stage: "applied" }],
   ];
 
   it.each(validSamples)("%s rejects unknown/$-operator keys", (_name, schema, valid) => {
@@ -66,9 +67,11 @@ describe("injection hardening applies to every schema", () => {
     expect(schema.safeParse({ ...valid, injected: true }).success).toBe(false);
   });
 
-  it.each(validSamples)("%s rejects operator objects replacing string values", (_name, schema, valid) => {
-    const firstStringKey = Object.entries(valid).find(([, v]) => typeof v === "string")?.[0];
-    if (!firstStringKey) return;
-    expect(schema.safeParse({ ...valid, [firstStringKey]: { $ne: "" } }).success).toBe(false);
+  it.each(validSamples)("%s rejects operator objects replacing any field value", (_name, schema, valid) => {
+    const keys = Object.keys(valid);
+    expect(keys.length).toBeGreaterThan(0);
+    for (const key of keys) {
+      expect(schema.safeParse({ ...valid, [key]: { $ne: "" } }).success).toBe(false);
+    }
   });
 });
