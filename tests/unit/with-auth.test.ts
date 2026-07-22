@@ -3,21 +3,11 @@ import { NextRequest } from "next/server";
 import { setupTestDb } from "../helpers/db";
 import WorkspaceModel from "@/models/workspace";
 import UserModel from "@/models/user";
-import { createSession, SESSION_COOKIE } from "@/lib/session";
+import { SESSION_COOKIE } from "@/lib/session";
 import { withAuth, withPublic } from "@/lib/with-auth";
+import { makeUser } from "../helpers/api";
 
 setupTestDb();
-
-async function makeUser(role: "admin" | "recruiter" | "interviewer") {
-  const ws = await WorkspaceModel.create({ name: "W" });
-  const user = await UserModel.create({
-    username: `u-${role}-${Math.floor(Math.random() * 1e9)}`,
-    email: `${role}-${Math.floor(Math.random() * 1e9)}@x.com`,
-    passwordHash: "h", workspaceId: ws._id, role,
-  });
-  const { token } = await createSession(user._id.toString());
-  return { user, token };
-}
 
 function req(method: string, token?: string, headers: Record<string, string> = {}) {
   return new NextRequest("http://localhost/api/test", {
