@@ -37,7 +37,7 @@ export function DemoBanner({ me }: { me: UserDto }) {
         Demo workspace — data resets automatically
       </p>
 
-      <p className="flex items-center gap-1 text-accent/80">
+      <p className="flex items-center gap-1 text-accent">
         <IconClock size={14} className="shrink-0" />
         resets in {formatDemoCountdown(me.demoExpiresAt, now)}
       </p>

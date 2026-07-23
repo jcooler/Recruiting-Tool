@@ -295,6 +295,15 @@ export function SourceChart({ bySource, reduceMotion }: { bySource: AnalyticsDat
                 stroke="var(--surface)"
                 strokeWidth={2}
                 isAnimationActive={!reduceMotion}
+                // Pie renders its own focusable <g tabindex="0">
+                // (rootTabIndex defaults to 0 in recharts' Pie component)
+                // independently of the chart root's `accessibilityLayer`
+                // prop above — axe's aria-hidden-focus rule caught it inside
+                // this figure's `aria-hidden="true"` wrapper (see
+                // ChartFigure's doc comment for why the wrapper is hidden at
+                // all). -1 keeps it out of the tab order like every other
+                // element in a decorative chart.
+                rootTabIndex={-1}
               >
                 {bySource.map((s) => (
                   <Cell key={s.source} fill={SOURCE_COLOR[s.source]} />

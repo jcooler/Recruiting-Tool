@@ -40,10 +40,12 @@ export interface CandidateCardProps {
 
 /**
  * One draggable pipeline card. The whole card is the drag surface
- * (`useDraggable`'s `listeners`/`attributes` land on the root element, giving
- * it `role="button"` + keyboard support for free) — nested controls (the name
- * button, the actions menu trigger) stop pointerdown propagation so a plain
- * click never gets mistaken for the start of a drag.
+ * (`useDraggable`'s `listeners`/`attributes` land on the root element,
+ * giving it `role="group"` + keyboard support for free — not the hook's
+ * default `role="button"`, since this root also contains real `<button>`s;
+ * see the `useDraggable` call below) — nested controls (the name button, the
+ * actions menu trigger) stop pointerdown propagation so a plain click never
+ * gets mistaken for the start of a drag.
  *
  * `onOpen`/`onMove`/`canEdit` are optional only for the `overlay` render path
  * in `BoardView`'s `<DragOverlay>`, which passes just `candidate` + `jobsById`
@@ -72,6 +74,18 @@ export function CandidateCard({
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: overlay ? `${candidate.id}::overlay` : candidate.id,
     disabled: !canEdit || overlay,
+    // dnd-kit's default draggable role is "button" (see @dnd-kit/core's
+    // useDraggable, defaultRole) — but this card's root also *contains* two
+    // real <button>s (the name button below, the Actions menu trigger),
+    // and a button-in-a-button is invalid ARIA: axe's `nested-interactive`
+    // rule flagged it (verified live on both /candidates and the embedded
+    // /jobs/[jobId] board — same shared component, same violation). "group"
+    // keeps the root focusable/tabbable (dnd-kit's actual drag behavior is
+    // driven by `listeners`, not by `role`, so this doesn't touch pointer or
+    // keyboard drag) while correctly allowing focusable descendants; the
+    // still-present `aria-roledescription="draggable"` is what tells
+    // assistive tech this group is draggable.
+    attributes: { role: "group" },
   });
 
   // stageHistory always has at least one entry once a candidate is created
@@ -82,7 +96,7 @@ export function CandidateCard({
   const job = jobsById[candidate.jobId];
   const canManage = canEdit && !overlay;
 
-  // Only wire up drag semantics (role="button", tabIndex, aria-describedby,
+  // Only wire up drag semantics (role="group", tabIndex, aria-describedby,
   // and critically `aria-disabled`) when the card can actually be dragged.
   // Verified live: with `{...attributes}` spread unconditionally, a
   // read-only (interviewer) card's `aria-disabled="true"` on this root
@@ -117,7 +131,12 @@ export function CandidateCard({
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => onOpen?.(candidate.id)}
-              className="truncate rounded-sm text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              // -my-0.5 py-0.5: grows the click/tap target to the WCAG 2.2
+              // 24px minimum (text-sm's line-height alone renders at 20px —
+              // axe's target-size rule flagged it) without shifting the job
+              // title below it — the negative margin cancels the padding's
+              // effect on layout flow, so only the hit area grows.
+              className="-my-0.5 truncate rounded-sm py-0.5 text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
             >
               {candidate.name}
             </button>
