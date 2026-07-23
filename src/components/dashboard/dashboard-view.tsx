@@ -87,17 +87,29 @@ function StageOverviewSkeleton() {
 
 /**
  * The `/dashboard` landing screen: four KPI tiles, the stage-overview bar
- * strip, and the workspace activity feed. Both data sources
- * (`useAnalytics`, `useCandidates`) are fetched once here and threaded down,
- * so the KPI row, stage bars, and activity feed all read from the same
- * in-flight/error/success state rather than each managing their own.
+ * strip, and the workspace activity feed. All three data sources
+ * (`useAnalytics`, `useCandidates({})`, `useCandidates({ rejected: true })`)
+ * are fetched once here and threaded down, so the KPI row, stage bars, and
+ * activity feed all read from the same in-flight/error/success state rather
+ * than each managing their own.
  */
 export function DashboardView() {
   const analytics = useAnalytics();
+  // Non-rejected candidates: source for the KPI tiles and the stage-overview
+  // bars (both are about the live, active pipeline).
   const candidates = useCandidates({});
+  // Rejected candidates: `GET /api/candidates` defaults to `rejected: false`
+  // when the filter is omitted, so without this second query a rejected
+  // candidate's activity — including the "rejected" stage-moved event
+  // itself — would silently never reach the feed. KPIs/stage bars must NOT
+  // read from this query; only the activity feed merges it in.
+  const rejectedCandidates = useCandidates({ rejected: true });
 
   const stageCounts = useMemo<StageCount[]>(() => {
     const data = candidates.data ?? [];
+    // `candidates` is already the non-rejected query, so `!c.rejected` is
+    // redundant today — kept as a defensive guard in case this ever reads
+    // from a broader list.
     return STAGES.map((stage) => ({
       stage,
       count: data.filter((c) => c.stage === stage && !c.rejected).length,
@@ -106,12 +118,18 @@ export function DashboardView() {
 
   const interviewCount = stageCounts.find((s) => s.stage === "interview")?.count ?? 0;
 
-  const isLoading = analytics.isLoading || candidates.isLoading;
-  const isError = analytics.isError || candidates.isError;
+  const feedCandidates = useMemo(
+    () => [...(candidates.data ?? []), ...(rejectedCandidates.data ?? [])],
+    [candidates.data, rejectedCandidates.data]
+  );
+
+  const isLoading = analytics.isLoading || candidates.isLoading || rejectedCandidates.isLoading;
+  const isError = analytics.isError || candidates.isError || rejectedCandidates.isError;
 
   function retry() {
     analytics.refetch();
     candidates.refetch();
+    rejectedCandidates.refetch();
   }
 
   if (isError) {
@@ -126,7 +144,7 @@ export function DashboardView() {
     );
   }
 
-  if (isLoading || !analytics.data || !candidates.data) {
+  if (isLoading || !analytics.data || !candidates.data || !rejectedCandidates.data) {
     return (
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -180,7 +198,7 @@ export function DashboardView() {
         <div className="rounded-lg border border-border bg-surface p-5">
           <h2 className="text-sm font-semibold text-text">Recent activity</h2>
           <div className="mt-2">
-            <ActivityFeed candidates={candidates.data} />
+            <ActivityFeed candidates={feedCandidates} />
           </div>
         </div>
       </div>
