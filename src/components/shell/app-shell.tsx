@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Sidebar />
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar onOpenNav={() => setMobileNavOpen(true)} />
-            <main id="main" className="flex-1 overflow-y-auto px-6 py-6 md:px-8">
+            <main id="main" tabIndex={-1} className="flex-1 overflow-y-auto px-6 py-6 md:px-8 focus:outline-none">
               {children}
             </main>
           </div>
