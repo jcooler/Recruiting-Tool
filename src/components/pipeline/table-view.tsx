@@ -25,13 +25,13 @@ const MAX_VISIBLE_TAGS = 2;
 const ROW_HEIGHT = 56;
 const OVERSCAN = 10;
 
-// Explicit per-column pixel widths, read by <colgroup> below. `table-fixed`
-// layout takes its column widths from the first row it sees — normally the
-// header row — but here the header is the *only* row still in normal flow
-// (each body <tr> is `position: absolute`, so it's out of flow and can't
-// contribute to the fixed layout's width calculation). A shared <colgroup>
-// is what keeps header and (virtualized, absolutely-positioned) body cells
-// aligned to the same columns.
+// Explicit per-column pixel widths, read by the shared <colgroup> below.
+// `table-fixed` layout takes its column widths from the <colgroup>/<col>
+// elements (falling back to the first row only when there's no colgroup),
+// applying them uniformly to every real, in-flow row in the table — header
+// and (virtualized) body alike. That uniformity is what keeps header and
+// body cells aligned to the same columns; see the render below for how the
+// virtualized rows stay in-flow to keep it that way.
 const COLUMN_WIDTHS: Record<string, number> = {
   name: 240,
   job: 200,
@@ -50,10 +50,12 @@ export interface TableViewProps {
   /**
    * Not part of the brief's core 3-prop signature — added so the empty state
    * below can actually clear the filters it names. PipelineView owns
-   * search/job/rejected (shared with BoardView, per the brief); TableView
-   * only adds client-side sorting, so it has no state of its own to reset.
+   * search/job/mode (shared with BoardView, per the brief); TableView only
+   * adds client-side sorting, so it has no state of its own to reset.
    */
   onClearFilters?: () => void;
+  /** Drives the empty-state copy only — `candidates` already comes mode-filtered from PipelineView. */
+  mode: "active" | "rejected";
 }
 
 function ariaSortValue(direction: false | "asc" | "desc"): "ascending" | "descending" | "none" {
@@ -83,16 +85,22 @@ const columnHelper = createColumnHelper<CandidateDto>();
  * Virtualized, sortable candidate table — the other half of Task 25's
  * board/table toggle. Renders a real `<table>`/`<thead>`/`<tbody>`/`<tr>`/
  * `<td>` tree (not `role="table"` divs) so screen readers get table
- * semantics for free; only the body rows are windowed via
- * `@tanstack/react-virtual`, positioned absolutely inside a `<tbody>` sized
- * to the full (unwindowed) row count so the scrollbar reflects the real
- * data length.
+ * semantics for free; only the visible window of body rows is actually
+ * rendered (`@tanstack/react-virtual`), as ordinary in-flow `<tr>`s — never
+ * `position: absolute` — bracketed by up to two invisible spacer `<tr>`s
+ * (each a single full-`colSpan` `<td>` sized to the not-currently-rendered
+ * rows' combined height) that reserve the rest of the scrollable height so
+ * the scrollbar still reflects the full (unwindowed) row count. Keeping
+ * every rendered row genuinely in-flow — rather than pulling it out of the
+ * table's formatting context — is what lets the shared `<colgroup>` size
+ * body cells identically to the header, including once the container is
+ * horizontally scrolled.
  *
- * Filtering (search/job/rejected) is owned by PipelineView and already
- * baked into `candidates` — this component adds only client-side sorting
+ * Filtering (search/job/mode) is owned by PipelineView and already baked
+ * into `candidates` — this component adds only client-side sorting
  * (`getSortedRowModel`), never re-filters.
  */
-export function TableView({ candidates, jobsById, onOpen, onClearFilters }: TableViewProps) {
+export function TableView({ candidates, jobsById, onOpen, onClearFilters, mode }: TableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -195,13 +203,22 @@ export function TableView({ candidates, jobsById, onOpen, onClearFilters }: Tabl
     return (
       <EmptyState
         icon={<IconSearch size={18} />}
-        title="No candidates match these filters"
+        title={mode === "rejected" ? "No rejected candidates match these filters" : "No candidates match these filters"}
         body="Try a different search term or clear the filters above."
         action={<Button onClick={onClearFilters}>Clear filters</Button>}
         className="py-24"
       />
     );
   }
+
+  const virtualItems = virtualizer.getVirtualItems();
+  // Reserve the height of rows above/below the rendered window with a single
+  // spacer <tr> on each side, instead of positioning every row absolutely —
+  // spacer and real rows alike stay in the table's normal flow, so the
+  // shared <colgroup> above sizes their <td>s exactly like the header's.
+  const topSpacerHeight = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const bottomSpacerHeight =
+    virtualItems.length > 0 ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
     <div ref={scrollRef} className="overflow-auto rounded-lg border border-border" style={{ maxHeight: "calc(100vh - 280px)" }}>
@@ -228,15 +245,16 @@ export function TableView({ candidates, jobsById, onOpen, onClearFilters }: Tabl
             ))}
           </tr>
         </thead>
-        <tbody style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
-          {virtualizer.getVirtualItems().map((virtualRow) => {
+        <tbody>
+          {topSpacerHeight > 0 && (
+            <tr aria-hidden="true">
+              <td colSpan={columns.length} style={{ height: topSpacerHeight, padding: 0, border: "none" }} />
+            </tr>
+          )}
+          {virtualItems.map((virtualRow) => {
             const row = rows[virtualRow.index];
             return (
-              <tr
-                key={row.id}
-                className="h-14 border-b border-border transition-colors hover:bg-surface-2"
-                style={{ position: "absolute", transform: `translateY(${virtualRow.start}px)`, width: "100%" }}
-              >
+              <tr key={row.id} className="h-14 border-b border-border transition-colors hover:bg-surface-2">
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
@@ -267,6 +285,11 @@ export function TableView({ candidates, jobsById, onOpen, onClearFilters }: Tabl
               </tr>
             );
           })}
+          {bottomSpacerHeight > 0 && (
+            <tr aria-hidden="true">
+              <td colSpan={columns.length} style={{ height: bottomSpacerHeight, padding: 0, border: "none" }} />
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
