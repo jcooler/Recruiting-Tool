@@ -211,7 +211,7 @@ npm test             # vitest run — 226 tests across 28 files, real Mongo sema
                       # mongodb-memory-server
 npm run lint         # next lint
 npm run contrast     # WCAG contrast check on the design-token palette (both themes) — 34 checks
-npm run test:e2e     # playwright test — 8 specs: auth/board/demo/rbac/resume flows plus a
+npm run test:e2e     # playwright test — 7 specs: auth/board/demo/rbac/resume/table flows plus a
                       # full-matrix screenshot + axe accessibility audit (see below). Requires a
                       # real MongoDB and a running dev server — see playwright.config.ts's header.
 ```
