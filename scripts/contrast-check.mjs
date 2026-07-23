@@ -54,6 +54,15 @@ function stageNames(tokens) {
   return [...names];
 }
 
+function badgeNames(tokens) {
+  const names = new Set();
+  for (const key of Object.keys(tokens)) {
+    const m = key.match(/^badge-(.+)-bg$/);
+    if (m) names.add(m[1]);
+  }
+  return [...names];
+}
+
 function buildChecks(tokens) {
   const checks = [
     ["text vs bg", "text", "bg", 4.5],
@@ -70,6 +79,14 @@ function buildChecks(tokens) {
       `stage-${stage}-fg vs stage-${stage}-bg`,
       `stage-${stage}-fg`,
       `stage-${stage}-bg`,
+      4.5,
+    ]);
+  }
+  for (const badge of badgeNames(tokens)) {
+    checks.push([
+      `badge-${badge}-fg vs badge-${badge}-bg`,
+      `badge-${badge}-fg`,
+      `badge-${badge}-bg`,
       4.5,
     ]);
   }

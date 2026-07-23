@@ -55,7 +55,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Sidebar />
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar onOpenNav={() => setMobileNavOpen(true)} />
-            <main id="main" tabIndex={-1} className="flex-1 overflow-y-auto px-6 py-6 md:px-8 focus:outline-none">
+            {/* tabIndex 0, not -1: this region also scrolls (overflow-y-auto)
+                whenever a page's content outgrows the viewport (e.g.
+                /analytics at 900px tall) — axe's scrollable-region-focusable
+                rule flagged -1 here as unreachable-by-keyboard scrollable
+                content. 0 keeps the skip link's `href="#main"` focus target
+                working exactly as before (still focusable) while also
+                putting it in the normal tab order right after the skip
+                link, so a keyboard user can reach it and scroll with
+                arrow/Page keys on any page tall enough to need it. */}
+            <main id="main" tabIndex={0} className="flex-1 overflow-y-auto px-6 py-6 md:px-8 focus:outline-none">
               {children}
             </main>
           </div>
