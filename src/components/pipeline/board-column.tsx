@@ -25,6 +25,7 @@ export interface BoardColumnProps {
   candidates: CandidateDto[];
   jobsById: Record<string, JobDto>;
   canEdit: boolean;
+  mode: "active" | "rejected";
   onOpen: (id: string) => void;
   onMove: (payload: MoveStagePayload) => void;
 }
@@ -51,8 +52,12 @@ export interface BoardColumnProps {
  * (column order) as the deciding factor, which is what arrow-key stepping
  * and mouse dropping both need.
  */
-export function BoardColumn({ stage, candidates, jobsById, canEdit, onOpen, onMove }: BoardColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage, disabled: !canEdit });
+export function BoardColumn({ stage, candidates, jobsById, canEdit, mode, onOpen, onMove }: BoardColumnProps) {
+  // Rejected mode has no draggable cards anywhere on the board (see
+  // CandidateCard), so nothing can ever land here — disabling the droppable
+  // outright (rather than leaving it enabled-but-unused) keeps `isOver`
+  // from ever lighting the accent ring for a drop that can't happen.
+  const { setNodeRef, isOver } = useDroppable({ id: stage, disabled: !canEdit || mode === "rejected" });
   const Icon = STAGE_ICON[stage];
 
   return (
@@ -74,12 +79,20 @@ export function BoardColumn({ stage, candidates, jobsById, canEdit, onOpen, onMo
         )}
       >
         {candidates.length === 0 ? (
-          <div
-            aria-hidden="true"
-            className="flex h-28 items-center justify-center rounded-lg border-2 border-dashed border-border text-xs text-text-3"
-          >
-            Drop candidates here
-          </div>
+          mode === "rejected" ? (
+            // No dashed border, no "drop" copy: rejected mode has nothing
+            // draggable to drop here (see the useDroppable disable above).
+            <div aria-hidden="true" className="flex h-28 items-center justify-center rounded-lg text-xs text-text-3">
+              No rejected candidates
+            </div>
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-28 items-center justify-center rounded-lg border-2 border-dashed border-border text-xs text-text-3"
+            >
+              Drop candidates here
+            </div>
+          )
         ) : (
           candidates.map((candidate) => (
             <CandidateCard

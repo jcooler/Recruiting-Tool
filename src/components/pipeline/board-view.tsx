@@ -13,17 +13,25 @@ export interface BoardViewProps {
   candidates: CandidateDto[];
   jobsById: Record<string, JobDto>;
   canEdit: boolean;
+  /** Task-32b's binding Active/Rejected mode — `candidates` already comes filtered to match it (PipelineView), this just tells each column which of its two possible groupings (persisted stage's active occupants vs. persisted stage's rejected-from occupants) to show and whether drag/drop applies at all. */
+  mode: "active" | "rejected";
   onOpen: (id: string) => void;
   onMove: (payload: MoveStagePayload) => void;
 }
 
-export function BoardView({ candidates, jobsById, canEdit, onOpen, onMove }: BoardViewProps) {
+export function BoardView({ candidates, jobsById, canEdit, mode, onOpen, onMove }: BoardViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: columnCoordinates })
   );
-  const byStage = (stage: Stage) => candidates.filter((c) => c.stage === stage && !c.rejected);
+  // Rejected candidates keep the `stage` they were rejected from (the API
+  // never clears it — see applyStageMove/useMoveStage) — Rejected mode
+  // groups by that same persisted stage, just filtering for `rejected: true`
+  // instead of `false`. `candidates` is already server-filtered to one mode
+  // or the other (PipelineView's `useCandidates({ rejected })`), so this
+  // second check is a defensive no-op in the steady state, not a re-filter.
+  const byStage = (stage: Stage) => candidates.filter((c) => c.stage === stage && c.rejected === (mode === "rejected"));
   const active = candidates.find((c) => c.id === activeId) ?? null;
   const name = (id: string | number) => candidates.find((c) => c.id === id)?.name ?? "Candidate";
   const col = (id: string | number | undefined) => (id && STAGE_LABELS[id as Stage]) || "the board";
@@ -58,7 +66,7 @@ export function BoardView({ candidates, jobsById, canEdit, onOpen, onMove }: Boa
       <ol className="flex gap-4 overflow-x-auto snap-x snap-mandatory md:snap-none pb-4" aria-label="Pipeline stages">
         {STAGES.map((stage) => (
           <BoardColumn key={stage} stage={stage} candidates={byStage(stage)}
-            jobsById={jobsById} canEdit={canEdit} onOpen={onOpen} onMove={onMove} />
+            jobsById={jobsById} canEdit={canEdit} mode={mode} onOpen={onOpen} onMove={onMove} />
         ))}
       </ol>
       <DragOverlay>{active ? <CandidateCard candidate={active} jobsById={jobsById} overlay /> : null}</DragOverlay>
