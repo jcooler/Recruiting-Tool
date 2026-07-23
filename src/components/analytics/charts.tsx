@@ -243,7 +243,7 @@ export function TimeInStageChart({
             itemStyle={TOOLTIP_ITEM_STYLE}
             formatter={numberFormatter("day")}
           />
-          <Bar dataKey="avgDays" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={!reduceMotion}>
+          <Bar dataKey="avgDays" radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={!reduceMotion}>
             {data.map((d) => (
               <Cell key={d.stage} fill={stageFill(d.stage)} />
             ))}
