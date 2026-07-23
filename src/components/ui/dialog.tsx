@@ -23,6 +23,14 @@ export interface DialogProps {
  * `DialogTitle` is always rendered (required for the dialog to have an
  * accessible name) — pass `description` when body copy alone wouldn't make
  * the dialog's purpose obvious to a screen reader user.
+ *
+ * The panel is a `max-h`-capped flex column with only the middle (`children`)
+ * region scrolling — title and footer stay put. Content this long enough to
+ * need it is real (e.g. `AddCandidateDialog`'s full field set after a resume
+ * parses, at an ordinary ~720px-tall viewport, genuinely overflows a fixed,
+ * unscrollable panel and pushes its own Cancel/Save footer off-screen with
+ * no way to reach it — verified live). Same header/scrollable-body/footer
+ * split `Drawer` (./drawer.tsx) already uses for the identical problem.
  */
 export function Dialog({ open, onOpenChange, title, description, children, footer }: DialogProps) {
   const openerRef = useRef<HTMLElement | null>(null);
@@ -48,18 +56,22 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
             openerRef.current?.focus();
           }}
           className={
-            "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-32px)] max-w-md -translate-x-1/2 -translate-y-1/2 " +
-            "rounded-lg border border-border bg-surface p-6 shadow-lg outline-none " +
+            "fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100vw-32px)] max-w-md -translate-x-1/2 -translate-y-1/2 " +
+            "flex-col rounded-lg border border-border bg-surface shadow-lg outline-none " +
             "transition-all duration-150 " +
             "data-[state=closed]:scale-95 data-[state=closed]:opacity-0 starting:scale-95 starting:opacity-0"
           }
         >
-          <RadixDialog.Title className="pr-6 text-base font-semibold text-text">{title}</RadixDialog.Title>
-          {description && (
-            <RadixDialog.Description className="mt-1 text-sm text-text-2">{description}</RadixDialog.Description>
+          <div className="shrink-0 p-6 pb-0">
+            <RadixDialog.Title className="pr-6 text-base font-semibold text-text">{title}</RadixDialog.Title>
+            {description && (
+              <RadixDialog.Description className="mt-1 text-sm text-text-2">{description}</RadixDialog.Description>
+            )}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">{children}</div>
+          {footer && (
+            <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-2">{footer}</div>
           )}
-          <div className="mt-4">{children}</div>
-          {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
           <RadixDialog.Close
             aria-label="Close dialog"
             className={
