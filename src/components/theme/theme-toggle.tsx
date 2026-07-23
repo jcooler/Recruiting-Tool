@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { applyTheme, type Theme } from "@/lib/theme";
+import { applyTheme, getTheme, THEME_CHANGE_EVENT, type Theme } from "@/lib/theme";
 
 function SunIcon() {
   return (
@@ -47,19 +47,26 @@ function MoonIcon() {
  * needs to guess the visitor's theme.
  */
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(() =>
-    typeof document !== "undefined" && document.documentElement.dataset.theme === "dark" ? "dark" : "light"
-  );
+  // Always initialize to "light", on both server and client — reading
+  // `document` here would make the *client's own first render* diverge from
+  // the server-rendered markup whenever the visitor's actual theme differs
+  // (a real hydration-mismatch, not just a cosmetic one-frame flash), since
+  // this initializer runs again on the client during hydration itself, not
+  // after it. The effect below corrects the icon immediately post-mount.
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const current = document.documentElement.dataset.theme;
-    setTheme(current === "dark" ? "dark" : "light");
+    const sync = () => setTheme(getTheme() ?? "light");
+    sync();
+    // Theme can also change via the command palette's "Toggle theme" action
+    // (or, in principle, another mounted ThemeToggle) — re-sync whenever
+    // `applyTheme` runs anywhere, not just from this button's own click.
+    document.addEventListener(THEME_CHANGE_EVENT, sync);
+    return () => document.removeEventListener(THEME_CHANGE_EVENT, sync);
   }, []);
 
   function handleToggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    applyTheme(next);
-    setTheme(next);
+    applyTheme(theme === "dark" ? "light" : "dark");
   }
 
   const label = theme === "dark" ? "Switch to light theme" : "Switch to dark theme";
