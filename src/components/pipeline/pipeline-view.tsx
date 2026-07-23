@@ -11,9 +11,10 @@ import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input, NativeSelect } from "@/components/ui/field";
-import { IconPlus, IconSearch, IconX } from "@/components/ui/icons";
+import { IconBoard, IconPlus, IconSearch, IconTable, IconX } from "@/components/ui/icons";
 import { BoardSkeleton } from "./board-skeleton";
 import { BoardView } from "./board-view";
+import { TableView } from "./table-view";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
@@ -42,11 +43,19 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
   const searchParams = useSearchParams();
   const openDrawer = useUiStore((s) => s.openDrawer);
   const setAddCandidateOpen = useUiStore((s) => s.setAddCandidateOpen);
+  const view = useUiStore((s) => s.view);
+  const setView = useUiStore((s) => s.setView);
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, SEARCH_DEBOUNCE_MS);
   const [filterJobId, setFilterJobId] = useState("");
   const [showRejected, setShowRejected] = useState(false);
+
+  function clearFilters() {
+    setSearch("");
+    setFilterJobId("");
+    setShowRejected(false);
+  }
 
   const jobsQuery = useJobs();
   const jobsById = useMemo(() => {
@@ -143,7 +152,34 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
             Show rejected
           </button>
 
-          {/* Task 25 seam: board/table view toggle mounts here. */}
+          <div role="group" aria-label="View" className="inline-flex shrink-0 overflow-hidden rounded-md border border-border">
+            <button
+              type="button"
+              aria-pressed={view === "board"}
+              onClick={() => setView("board")}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 px-3 text-sm font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                view === "board" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
+              )}
+            >
+              <IconBoard size={15} />
+              Board
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === "table"}
+              onClick={() => setView("table")}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 border-l border-border px-3 text-sm font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                view === "table" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
+              )}
+            >
+              <IconTable size={15} />
+              Table
+            </button>
+          </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {canEdit && (
@@ -158,6 +194,8 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
 
       {isLoading ? (
         <BoardSkeleton />
+      ) : view === "table" ? (
+        <TableView candidates={candidatesQuery.data} jobsById={jobsById} onOpen={openDrawer} onClearFilters={clearFilters} />
       ) : (
         <BoardView
           candidates={candidatesQuery.data}
