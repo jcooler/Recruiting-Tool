@@ -103,8 +103,36 @@ export function AppShell({ children }: { children: ReactNode }) {
                 working exactly as before (still focusable) while also
                 putting it in the normal tab order right after the skip
                 link, so a keyboard user can reach it and scroll with
-                arrow/Page keys on any page tall enough to need it. */}
-            <main id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 md:px-8 focus:outline-none">
+                arrow/Page keys on any page tall enough to need it.
+
+                focus-visible ring (WCAG 2.4.7): `tabIndex={0}` above makes
+                this a real, keyboard-reachable stop — it needs a visible
+                indicator like every other focusable control in the app, not
+                just the skip-link's own target.
+
+                Deliberately uses the `ring-*` idiom (ThemeToggle, the skip
+                link above) rather than the app's more common
+                `outline-2 outline-accent` one (Topbar's buttons, etc.):
+                verified live (computed styles + the generated Tailwind CSS)
+                that the `outline-*` idiom is currently a no-op everywhere
+                it's used — `focus-visible:outline-none`'s literal
+                `outline-style: none` is emitted *after*
+                `focus-visible:outline-2`'s `outline-style:
+                var(--tw-outline-style)` in the generated stylesheet, so at
+                equal specificity it always wins the cascade and no outline
+                ever renders. `ring-*` composes via `box-shadow` instead —
+                a disjoint property `outline-none` never touches — and was
+                confirmed to render correctly. `ring-inset` (no
+                `ring-offset-*`) instead of the usual offset ring: `<main>`
+                fills the scroll column edge-to-edge, so an outward-offset
+                ring would be clipped by the viewport on the top/left/right
+                sides; an inset ring stays fully visible and reads cleanly
+                against the large content area in both themes. */}
+            <main
+              id="main"
+              tabIndex={0}
+              className="min-h-0 flex-1 overflow-y-auto px-6 py-6 md:px-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+            >
               {children}
             </main>
           </div>
