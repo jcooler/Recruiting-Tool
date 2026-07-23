@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "cmdk";
+import { useCan } from "@/hooks/use-can";
 import { useJobs, useLogout } from "@/hooks/queries";
 import { useUiStore } from "@/stores/ui";
 import { applyTheme, getTheme } from "@/lib/theme";
@@ -54,6 +55,7 @@ export function CommandPalette() {
   const open = useUiStore((s) => s.paletteOpen);
   const setOpen = useUiStore((s) => s.setPaletteOpen);
   const setAddCandidateOpen = useUiStore((s) => s.setAddCandidateOpen);
+  const { canEdit } = useCan();
   const { data: jobs } = useJobs();
   const logout = useLogout();
   const openerRef = useRef<HTMLElement | null>(null);
@@ -142,10 +144,12 @@ export function CommandPalette() {
               </CommandGroup>
 
               <CommandGroup heading={<GroupHeading>Actions</GroupHeading>}>
-                <CommandItem onSelect={handleAddCandidate} className={ITEM_CLASS}>
-                  <IconPlus size={16} />
-                  Add candidate
-                </CommandItem>
+                {canEdit && (
+                  <CommandItem onSelect={handleAddCandidate} className={ITEM_CLASS}>
+                    <IconPlus size={16} />
+                    Add candidate
+                  </CommandItem>
+                )}
                 <CommandItem onSelect={handleToggleTheme} className={ITEM_CLASS}>
                   <IconSun size={16} />
                   Toggle theme

@@ -79,7 +79,21 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api<{ ok: true }>("/api/users/logout", { method: "POST" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      // `refetchType: "none"`: mark `me` stale without forcing an immediate
+      // refetch on whatever's *currently* mounted — every logout call site
+      // (Topbar, CommandPalette) navigates away in its own `onSuccess`, which
+      // TanStack Query runs after this one, but that navigation is async
+      // (Next.js still has to fetch/compile the target route). An eager
+      // refetch here resolves against the still-mounted AppShell/AuthGate,
+      // which sees the 401 and independently calls `router.replace("/login")`
+      // — racing the caller's own `router.push("/")` and sometimes winning
+      // it, landing signed-out users on /login instead of the marketing
+      // page. Marking stale (not refetching) leaves AuthGate's last-known
+      // "signed in" state alone for the instant it takes to unmount, while
+      // still guaranteeing the next mount of `useMe()` (Landing, or a fresh
+      // AuthGate if the user lands back on a protected route) fetches fresh
+      // rather than serving stale cached auth state.
+      queryClient.invalidateQueries({ queryKey: queryKeys.me, refetchType: "none" });
     },
   });
 }
