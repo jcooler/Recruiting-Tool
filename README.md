@@ -210,9 +210,10 @@ npm run typecheck   # tsc --noEmit
 npm test             # vitest run — 226 tests across 28 files, real Mongo semantics via
                       # mongodb-memory-server
 npm run lint         # next lint
-npm run contrast     # WCAG contrast check on the design-token palette (both themes)
-npm run test:e2e     # playwright test — not yet configured in this repo; arrives with the
-                      # end-to-end testing task
+npm run contrast     # WCAG contrast check on the design-token palette (both themes) — 34 checks
+npm run test:e2e     # playwright test — 8 specs: auth/board/demo/rbac/resume flows plus a
+                      # full-matrix screenshot + axe accessibility audit (see below). Requires a
+                      # real MongoDB and a running dev server — see playwright.config.ts's header.
 ```
 
 ## Screenshots
@@ -222,5 +223,9 @@ Screenshots live under [`docs/screenshots/`](docs/screenshots/):
 - **`before/`** — the legacy split frontend (`frontend/`, Next.js 14 + Bootstrap), captured at
   desktop (1440×900) and mobile (390×844) viewports immediately before it was deleted. Its proxied
   API was unreachable when these were taken, so both show the logged-out state.
-- **`after/`** — screenshots of this rebuild; not yet captured. They'll be added alongside the
-  end-to-end testing task once there's a running app to point Playwright at.
+- **`after/`** — this rebuild, captured by `tests/e2e/audit.spec.ts`: every major view (landing,
+  login, dashboard, jobs, job detail, candidates board/table, candidate drawer, add-candidate,
+  analytics, settings) × both themes × desktop/mobile viewports (44 PNGs). The same spec runs a
+  full `@axe-core/playwright` scan (WCAG 2.0/2.1/2.2 AA) against every view/theme combination at
+  desktop size and asserts zero violations — re-run `npx playwright test tests/e2e/audit.spec.ts`
+  to regenerate after a visual change.
