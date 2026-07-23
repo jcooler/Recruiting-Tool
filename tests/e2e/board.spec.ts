@@ -171,3 +171,56 @@ test.describe("pipeline board drag interactions", () => {
     await expect(applied.getByText(menuCardName, { exact: true })).toHaveCount(0);
   });
 });
+
+test.describe("pipeline rejected mode", () => {
+  /**
+   * Pins task-32b's defect-2 fix end to end: rejecting a candidate from
+   * Active mode removes it from that view entirely (the old "Show rejected"
+   * toggle silently swapped the whole list instead); switching to Rejected
+   * mode shows it under the stage it was rejected from, read-only (no
+   * dnd-kit `role="group"` — see candidate-card.tsx's `draggable` gate);
+   * and "Restore" from its card menu returns it to Active mode.
+   */
+  test("rejecting a candidate removes it from Active mode; Rejected mode shows it read-only, and Restore returns it", async ({
+    page,
+  }) => {
+    await enterDemo(page);
+    await page.goto("/candidates");
+
+    const applied = column(page, "Applied");
+    const name = await firstCardName(applied);
+    const card = applied.locator(CARD_SELECTOR).first();
+
+    await card.getByRole("button", { name: `Actions for ${name}` }).click();
+    const [rejectResponse] = await Promise.all([
+      page.waitForResponse((res) => /\/api\/candidates\/[^/]+\/stage$/.test(res.url()) && res.request().method() === "PATCH"),
+      page.getByRole("menuitem", { name: "Reject" }).click(),
+    ]);
+    expect(rejectResponse.ok()).toBe(true);
+
+    // Active mode (still selected): the candidate is gone from the whole board, not just its old column.
+    await expect(page.getByText(name, { exact: true })).toHaveCount(0);
+
+    // --- Switch to Rejected mode ---
+    await page.getByRole("button", { name: "Rejected", exact: true }).click();
+    await expect(applied.getByText(name, { exact: true })).toBeVisible();
+
+    const rejectedCard = applied.locator(CARD_SELECTOR).first();
+    // Not draggable: dnd-kit's listeners/attributes (the source of role="group") aren't spread onto a rejected card's root.
+    await expect(rejectedCard).not.toHaveAttribute("role", "group");
+
+    await rejectedCard.getByRole("button", { name: `Actions for ${name}` }).click();
+    await expect(page.getByRole("menuitem", { name: "Move to" })).toHaveCount(0);
+    await expect(page.getByRole("menuitem", { name: "Reject" })).toHaveCount(0);
+    const [restoreResponse] = await Promise.all([
+      page.waitForResponse((res) => /\/api\/candidates\/[^/]+\/stage$/.test(res.url()) && res.request().method() === "PATCH"),
+      page.getByRole("menuitem", { name: "Restore" }).click(),
+    ]);
+    expect(restoreResponse.ok()).toBe(true);
+
+    // --- Restored: gone from Rejected mode, back in Active mode's Applied column ---
+    await expect(applied.getByText(name, { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Active", exact: true }).click();
+    await expect(applied.getByText(name, { exact: true })).toBeVisible();
+  });
+});

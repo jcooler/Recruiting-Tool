@@ -24,9 +24,15 @@ export interface PipelineViewProps {
 }
 
 /**
- * Owns the pipeline's filter state (search, job, rejected) and renders
+ * Owns the pipeline's filter state (search, job, mode) and renders
  * `BoardSkeleton` / an error retry state / `BoardView` off one
- * `useCandidates` query. Wrapped in `Suspense` because `useSearchParams`
+ * `useCandidates` query. `mode` ("active" | "rejected") is the binding
+ * two-state design from task-32b: it drives `useCandidates`'s `rejected`
+ * filter directly (the API itself stays either/or — never both at once),
+ * and is threaded down to `BoardView`/`TableView` so they can render each
+ * mode correctly (board: which stage-column a card lands in, draggability;
+ * table: empty-state copy — the Stage cell itself already reads each row's
+ * own `rejected` field). Wrapped in `Suspense` because `useSearchParams`
  * requires one for any statically-analyzable route segment — the fallback
  * matches `BoardView`'s own loading skeleton so there's no visible flash.
  */
@@ -49,12 +55,12 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, SEARCH_DEBOUNCE_MS);
   const [filterJobId, setFilterJobId] = useState("");
-  const [showRejected, setShowRejected] = useState(false);
+  const [mode, setMode] = useState<"active" | "rejected">("active");
 
   function clearFilters() {
     setSearch("");
     setFilterJobId("");
-    setShowRejected(false);
+    setMode("active");
   }
 
   const jobsQuery = useJobs();
@@ -68,7 +74,7 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
   const candidatesQuery = useCandidates({
     jobId: effectiveJobId,
     search: debouncedSearch || undefined,
-    rejected: showRejected,
+    rejected: mode === "rejected",
   });
   const moveStage = useMoveStage();
 
@@ -137,20 +143,32 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
             </div>
           )}
 
-          <button
-            type="button"
-            aria-pressed={showRejected}
-            onClick={() => setShowRejected((r) => !r)}
-            className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors",
-              "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
-              showRejected
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-border bg-surface text-text-2 hover:bg-surface-2"
-            )}
-          >
-            Show rejected
-          </button>
+          <div role="group" aria-label="Mode" className="inline-flex shrink-0 overflow-hidden rounded-md border border-border">
+            <button
+              type="button"
+              aria-pressed={mode === "active"}
+              onClick={() => setMode("active")}
+              className={cn(
+                "inline-flex h-9 items-center px-3 text-sm font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                mode === "active" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
+              )}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === "rejected"}
+              onClick={() => setMode("rejected")}
+              className={cn(
+                "inline-flex h-9 items-center border-l border-border px-3 text-sm font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                mode === "rejected" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
+              )}
+            >
+              Rejected
+            </button>
+          </div>
 
           <div role="group" aria-label="View" className="inline-flex shrink-0 overflow-hidden rounded-md border border-border">
             <button
@@ -195,12 +213,19 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
       {isLoading ? (
         <BoardSkeleton />
       ) : view === "table" ? (
-        <TableView candidates={candidatesQuery.data} jobsById={jobsById} onOpen={openDrawer} onClearFilters={clearFilters} />
+        <TableView
+          candidates={candidatesQuery.data}
+          jobsById={jobsById}
+          onOpen={openDrawer}
+          onClearFilters={clearFilters}
+          mode={mode}
+        />
       ) : (
         <BoardView
           candidates={candidatesQuery.data}
           jobsById={jobsById}
           canEdit={canEdit}
+          mode={mode}
           onOpen={openDrawer}
           onMove={moveStage.mutate}
         />

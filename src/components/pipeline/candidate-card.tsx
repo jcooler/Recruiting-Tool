@@ -39,13 +39,16 @@ export interface CandidateCardProps {
 }
 
 /**
- * One draggable pipeline card. The whole card is the drag surface
- * (`useDraggable`'s `listeners`/`attributes` land on the root element,
- * giving it `role="group"` + keyboard support for free — not the hook's
- * default `role="button"`, since this root also contains real `<button>`s;
- * see the `useDraggable` call below) — nested controls (the name button, the
- * actions menu trigger) stop pointerdown propagation so a plain click never
- * gets mistaken for the start of a drag.
+ * One pipeline card — draggable when it represents an active candidate an
+ * editor can act on, read-only otherwise (a rejected candidate, in the
+ * task-32b Rejected board mode; or any candidate for a read-only/interviewer
+ * viewer). The whole card is the drag surface (`useDraggable`'s
+ * `listeners`/`attributes` land on the root element, giving it
+ * `role="group"` + keyboard support for free — not the hook's default
+ * `role="button"`, since this root also contains real `<button>`s; see the
+ * `useDraggable` call below) — nested controls (the name button, the actions
+ * menu trigger) stop pointerdown propagation so a plain click never gets
+ * mistaken for the start of a drag.
  *
  * `onOpen`/`onMove`/`canEdit` are optional only for the `overlay` render path
  * in `BoardView`'s `<DragOverlay>`, which passes just `candidate` + `jobsById`
@@ -106,19 +109,24 @@ export function CandidateCard({
   // as non-operable too, even though nothing in the DOM actually disables
   // it. For a read-only viewer the draggable affordance isn't "temporarily
   // disabled", it's not applicable at all, so the fix is to not present
-  // drag semantics rather than present them as disabled.
-  const dragProps = canEdit && !overlay ? { ...listeners, ...attributes } : {};
+  // drag semantics rather than present them as disabled. The same reasoning
+  // extends to `candidate.rejected` (task-32b's Rejected board mode): a
+  // rejected candidate isn't mid-drag-and-eligible-to-move, it's parked
+  // outside the active pipeline entirely, so it gets the same "not
+  // applicable" treatment rather than a disabled one.
+  const draggable = canEdit && !overlay && !candidate.rejected;
+  const dragProps = draggable ? { ...listeners, ...attributes } : {};
 
   return (
     <motion.div
       ref={setNodeRef}
       {...dragProps}
-      whileHover={!reduceMotion && !overlay && !isDragging ? { y: -2 } : undefined}
+      whileHover={!reduceMotion && draggable && !isDragging ? { y: -2 } : undefined}
       transition={{ duration: 0.15 }}
       className={cn(
         "flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 text-left transition-colors",
         "hover:border-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
-        canEdit && !overlay && "cursor-grab active:cursor-grabbing",
+        draggable && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-40",
         overlay && "shadow-lg"
       )}
@@ -127,19 +135,27 @@ export function CandidateCard({
         <div className="flex min-w-0 items-center gap-2">
           <Avatar seed={candidate.avatarSeed} name={candidate.name} size={28} />
           <div className="min-w-0">
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => onOpen?.(candidate.id)}
-              // -my-0.5 py-0.5: grows the click/tap target to the WCAG 2.2
-              // 24px minimum (text-sm's line-height alone renders at 20px —
-              // axe's target-size rule flagged it) without shifting the job
-              // title below it — the negative margin cancels the padding's
-              // effect on layout flow, so only the hit area grows.
-              className="-my-0.5 truncate rounded-sm py-0.5 text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-            >
-              {candidate.name}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => onOpen?.(candidate.id)}
+                // -my-0.5 py-0.5: grows the click/tap target to the WCAG 2.2
+                // 24px minimum (text-sm's line-height alone renders at 20px —
+                // axe's target-size rule flagged it) without shifting the job
+                // title below it — the negative margin cancels the padding's
+                // effect on layout flow, so only the hit area grows.
+                className="-my-0.5 min-w-0 flex-1 truncate rounded-sm py-0.5 text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                {candidate.name}
+              </button>
+              {/* Column headers group by persisted stage regardless of mode (see BoardView), so a card sitting under e.g. "Interview" needs its own mark that it's rejected, not currently active in that stage — the mode toggle alone only tells you which board you're looking at, not what any one card under a shared stage heading means. Reuses Badge's `danger` variant, the same already-contrast-checked token pair StageBadge's own `rejected` tone draws from. */}
+              {candidate.rejected && (
+                <Badge variant="danger" className="shrink-0">
+                  Rejected
+                </Badge>
+              )}
+            </div>
             {job && <p className="truncate text-xs text-text-3">{job.title}</p>}
           </div>
         </div>
@@ -156,30 +172,47 @@ export function CandidateCard({
               </button>
             </DropdownTrigger>
             <DropdownContent>
-              <RadixDropdown.Sub>
-                <RadixDropdown.SubTrigger className={SUB_TRIGGER_CLASS}>
-                  Move to
-                  <IconArrowRight size={12} />
-                </RadixDropdown.SubTrigger>
-                <RadixDropdown.Portal>
-                  <RadixDropdown.SubContent className={SUB_CONTENT_CLASS} sideOffset={4}>
-                    {STAGES.map((stage: Stage) => (
-                      <DropdownItem
-                        key={stage}
-                        disabled={stage === candidate.stage}
-                        onSelect={() => onMove?.({ candidateId: candidate.id, stage })}
-                      >
-                        {STAGE_LABELS[stage]}
-                      </DropdownItem>
-                    ))}
-                  </RadixDropdown.SubContent>
-                </RadixDropdown.Portal>
-              </RadixDropdown.Sub>
-              <DropdownItem destructive onSelect={() => onMove?.({ candidateId: candidate.id, rejected: true })}>
-                Reject
-              </DropdownItem>
-              <DropdownSeparator />
-              <DropdownItem onSelect={() => onOpen?.(candidate.id)}>View profile</DropdownItem>
+              {candidate.rejected ? (
+                // Rejected mode (task-32b, binding design): no "Move to"
+                // (the card isn't in an active stage to move from), no
+                // "Reject" (it already is) — only "Restore", which drops the
+                // rejected flag and returns the candidate to Active mode at
+                // its still-persisted stage.
+                <>
+                  <DropdownItem onSelect={() => onMove?.({ candidateId: candidate.id, rejected: false })}>
+                    Restore
+                  </DropdownItem>
+                  <DropdownSeparator />
+                  <DropdownItem onSelect={() => onOpen?.(candidate.id)}>View profile</DropdownItem>
+                </>
+              ) : (
+                <>
+                  <RadixDropdown.Sub>
+                    <RadixDropdown.SubTrigger className={SUB_TRIGGER_CLASS}>
+                      Move to
+                      <IconArrowRight size={12} />
+                    </RadixDropdown.SubTrigger>
+                    <RadixDropdown.Portal>
+                      <RadixDropdown.SubContent className={SUB_CONTENT_CLASS} sideOffset={4}>
+                        {STAGES.map((stage: Stage) => (
+                          <DropdownItem
+                            key={stage}
+                            disabled={stage === candidate.stage}
+                            onSelect={() => onMove?.({ candidateId: candidate.id, stage })}
+                          >
+                            {STAGE_LABELS[stage]}
+                          </DropdownItem>
+                        ))}
+                      </RadixDropdown.SubContent>
+                    </RadixDropdown.Portal>
+                  </RadixDropdown.Sub>
+                  <DropdownItem destructive onSelect={() => onMove?.({ candidateId: candidate.id, rejected: true })}>
+                    Reject
+                  </DropdownItem>
+                  <DropdownSeparator />
+                  <DropdownItem onSelect={() => onOpen?.(candidate.id)}>View profile</DropdownItem>
+                </>
+              )}
             </DropdownContent>
           </Dropdown>
         )}
