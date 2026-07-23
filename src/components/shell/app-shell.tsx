@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useMe } from "@/hooks/queries";
 import { useUiStore } from "@/stores/ui";
+import { CandidateDrawer } from "@/components/candidate/candidate-drawer";
 import { Sidebar, MobileSidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { DemoBanner } from "./demo-banner";
@@ -16,7 +17,8 @@ const SKIP_LINK_CLASS =
 /**
  * The authenticated chrome: skip link, sidebar + topbar landmarks, main
  * content slot, and the pieces that float above everything else (mobile
- * nav drawer, command palette). Rendered once by `app/(app)/layout.tsx`,
+ * nav drawer, command palette, candidate profile drawer). Rendered once by
+ * `app/(app)/layout.tsx`,
  * inside `AuthGate` — by the time this mounts, `useMe()` is guaranteed to
  * resolve from cache (AuthGate already fetched it) rather than re-fetching.
  *
@@ -61,6 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <MobileSidebar open={mobileNavOpen} onOpenChange={setMobileNavOpen} />
       <CommandPalette />
+      <CandidateDrawer />
     </>
   );
 }
