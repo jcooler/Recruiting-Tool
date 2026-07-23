@@ -396,6 +396,21 @@ export function useWorkspace() {
   });
 }
 
+export function useRenameWorkspace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string }) => api<WorkspaceDto>("/api/workspace", { method: "PATCH", json: body }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workspace });
+      // `useMe()`'s `workspaceName` (shown in the topbar) is denormalized
+      // from the same workspace document — without this, the topbar would
+      // keep showing the pre-rename name until something else happened to
+      // refetch `/api/users/me`.
+      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
 export function useParseResume() {
   return useMutation({
     mutationFn: (file: File) => {
