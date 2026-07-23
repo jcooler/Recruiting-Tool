@@ -175,3 +175,18 @@ export const IconClock = makeIcon(
     <path d="M12 7.5V12l3.3 2" />
   </>
 );
+
+export const IconShield = makeIcon(
+  <>
+    <path d="M12 3.2 19 6v5.6c0 4.7-3 8.3-7 9.5-4-1.2-7-4.8-7-9.5V6l7-2.8Z" />
+    <path d="M9 12.1 11.2 14.3 15.4 9.6" />
+  </>
+);
+
+/** Half-filled circle — represents the light/dark theme pair as one glyph. */
+export const IconContrast = makeIcon(
+  <>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 3.5a8.5 8.5 0 0 1 0 17V3.5Z" fill="currentColor" stroke="none" />
+  </>
+);
