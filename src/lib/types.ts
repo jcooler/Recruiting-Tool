@@ -34,3 +34,10 @@ export const SOURCE_LABELS: Record<Source, string> = {
 
 export const EMPLOYMENT_TYPES = ["full-time", "part-time", "contract", "intern"] as const;
 export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
+
+export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
+  "full-time": "Full-time",
+  "part-time": "Part-time",
+  contract: "Contract",
+  intern: "Intern",
+};
