@@ -92,6 +92,7 @@ export function JobHeader({ jobId }: JobHeaderProps) {
   }
 
   const job = jobQuery.data;
+  const jobsLoading = jobsQuery.isLoading || !jobsQuery.data;
   const counts = jobsQuery.data?.find((j) => j.id === jobId)?.counts;
 
   function toggleStatus() {
@@ -143,14 +144,16 @@ export function JobHeader({ jobId }: JobHeaderProps) {
       </div>
 
       <div className="grid grid-cols-5 gap-3">
-        {STAGES.map((stage) => (
-          <div key={stage} className="rounded-lg border border-border bg-surface px-3 py-2.5 text-center">
-            <p className="text-lg font-semibold tabular-nums" style={{ color: `var(--stage-${stage}-fg)` }}>
-              {counts?.[stage] ?? 0}
-            </p>
-            <p className="mt-0.5 truncate text-xs font-medium text-text-3">{STAGE_LABELS[stage]}</p>
-          </div>
-        ))}
+        {jobsLoading
+          ? STAGES.map((stage) => <Skeleton key={stage} height={56} />)
+          : STAGES.map((stage) => (
+              <div key={stage} className="rounded-lg border border-border bg-surface px-3 py-2.5 text-center">
+                <p className="text-lg font-semibold tabular-nums" style={{ color: `var(--stage-${stage}-fg)` }}>
+                  {counts?.[stage] ?? 0}
+                </p>
+                <p className="mt-0.5 truncate text-xs font-medium text-text-3">{STAGE_LABELS[stage]}</p>
+              </div>
+            ))}
       </div>
 
       {canEdit && (
