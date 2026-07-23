@@ -34,7 +34,18 @@ export function StageBadge({ stage, rejected = false, className }: StageBadgePro
   } as CSSProperties;
 
   return (
+    // `aria-label` (not name-from-content): verified live in Chromium that a
+    // <span> (role="generic") whose only children are an aria-hidden <svg>
+    // icon plus a text node can compute an *empty* accessible name at an
+    // ancestor's name-from-content pass (e.g. a <table>'s <td>) — the hidden
+    // icon sibling appears to short-circuit the subtree text walk rather
+    // than being cleanly skipped. Headings/buttons (which support name-from-
+    // content directly) were unaffected in the same test; only this
+    // generic-role + hidden-icon-sibling shape was. An explicit `aria-label`
+    // sources the name directly and sidesteps the computation entirely, so
+    // this stays correct regardless of where StageBadge is embedded next.
     <span
+      aria-label={label}
       className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", className)}
       style={style}
     >
