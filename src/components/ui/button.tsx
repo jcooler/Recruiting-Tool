@@ -30,6 +30,16 @@ const SIZES: Record<ButtonSize, string> = {
 };
 
 /**
+ * Same visual treatment as `<Button>`, for callers that need an `<a>` (e.g.
+ * `next/link`) rather than a `<button>` — `<Button>` always renders a real
+ * button element, so nesting a link inside it would produce invalid,
+ * non-functional markup (an interactive element inside another one).
+ */
+export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md", className?: string): string {
+  return cn(BASE, VARIANTS[variant], SIZES[size], className);
+}
+
+/**
  * `loading` disables the button (prevents double-submits) and swaps in a
  * decorative Spinner ahead of the label — the label itself always stays
  * visible so the loading state never depends on the spinner icon alone.
