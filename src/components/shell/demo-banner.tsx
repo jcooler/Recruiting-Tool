@@ -7,25 +7,7 @@ import { useSwitchDemoRole } from "@/hooks/queries";
 import { toast } from "@/components/ui/toast";
 import { NativeSelect } from "@/components/ui/field";
 import { IconClock } from "@/components/ui/icons";
-
-/**
- * Pure, exported for unit testing. `now` is threaded in (rather than read
- * internally via `Date.now()`) so the result is deterministic and the
- * component's re-render-every-minute tick is what drives freshness, not a
- * hidden read inside this function.
- */
-export function formatDemoCountdown(expiresAt: string | undefined, now: number): string {
-  if (!expiresAt) return "soon";
-  const ms = new Date(expiresAt).getTime() - now;
-  if (ms <= 0) return "any moment";
-
-  const totalMinutes = Math.ceil(ms / 60_000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours >= 1) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-  return `${minutes}m`;
-}
+import { formatDemoCountdown } from "@/lib/demo-countdown";
 
 export function DemoBanner({ me }: { me: UserDto }) {
   const [now, setNow] = useState(() => Date.now());
@@ -62,7 +44,7 @@ export function DemoBanner({ me }: { me: UserDto }) {
 
       <div className="ml-auto flex items-center gap-2">
         <label htmlFor="demo-role-switch" className="whitespace-nowrap text-sm font-medium">
-          Viewing as
+          Viewing as:
         </label>
         <div className="w-40">
           <NativeSelect
