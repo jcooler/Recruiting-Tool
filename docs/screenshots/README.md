@@ -25,7 +25,7 @@ before/after picture, plus an index of every screen this rebuild ships.
 ## Before → after
 
 `before/` holds 2 screenshots of the **legacy** split app, captured immediately before its
-`backend/`/`frontend/` directories were deleted (Task 31). Its proxied API was already unreachable
+`backend/`/`frontend/` directories were deleted (Task 30). Its proxied API was already unreachable
 at capture time, so both show the **logged-out** state only — there was no way to capture an
 authenticated legacy screen. `after/` is this rebuild's full 44-shot matrix, captured by
 [`tests/e2e/audit.spec.ts`](../../tests/e2e/audit.spec.ts).
