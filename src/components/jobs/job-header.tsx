@@ -31,7 +31,7 @@ function JobHeaderSkeleton() {
         </div>
         <Skeleton width={220} height={32} />
       </div>
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
         {STAGES.map((stage) => (
           <Skeleton key={stage} height={56} />
         ))}
@@ -143,7 +143,14 @@ export function JobHeader({ jobId }: JobHeaderProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-5 gap-3">
+      {/* grid-cols-3, not a flat 5: at a 390px mobile viewport a flat
+          grid-cols-5 gives each stat cell ~60px, forcing "Screening" /
+          "Interview" to truncate to "Scre…" / "Inte…" — verified live in a
+          full-matrix screenshot. 3 columns (wrapping 5 stages to two rows)
+          mirrors the same sm:-breakpoint stacking every other stat grid in
+          the app already uses (dashboard/jobs/analytics KPI rows), giving
+          each label room to render in full. */}
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
         {jobsLoading
           ? STAGES.map((stage) => <Skeleton key={stage} height={56} />)
           : STAGES.map((stage) => (

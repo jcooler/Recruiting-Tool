@@ -46,8 +46,25 @@ const LONG: { timeout: number } = { timeout: 20_000 };
 
 // Candidate card's own root class (see candidate-card.tsx) — same selector
 // board.spec.ts/demo.spec.ts use, always scoped to a specific container by
-// the caller so it never picks up an unrelated element.
+// the caller so it never picks up an unrelated element. Critically, that
+// scope must be the *loaded* board, not just any ancestor: board-skeleton.tsx
+// gives its own placeholder <div>s this exact same class list (to match the
+// real card's footprint pixel-for-pixel), so an unscoped
+// `page.locator(CARD_SELECTOR)` resolves to skeleton placeholders whenever
+// the query hasn't resolved yet — verified live, this shipped a real bug: a
+// `candidates-board` screenshot captured the loading skeleton, not the
+// board, because the skeleton's placeholder matched CARD_SELECTOR and
+// satisfied a bare `toBeVisible()` before real data ever arrived.
 const CARD_SELECTOR = ".rounded-lg.border.border-border.bg-surface.p-3";
+
+/**
+ * Real (loaded) candidate cards only — scoped to BoardView's own
+ * `<ol aria-label="Pipeline stages">`, never BoardSkeleton's
+ * `<ol aria-label="Loading pipeline">` (see CARD_SELECTOR's comment above).
+ */
+function boardCards(page: Page) {
+  return page.getByRole("list", { name: "Pipeline stages" }).locator(CARD_SELECTOR);
+}
 
 function shotPath(view: string, theme: Theme, vp: string): string {
   return path.join(SCREENSHOT_DIR, `${view}-${theme}-${vp}.png`);
@@ -163,30 +180,34 @@ const AUTH_VIEWS: Record<string, ViewSetup> = {
   },
   "candidates-board": async (page) => {
     await page.goto("/candidates");
-    await expect(page.locator(CARD_SELECTOR).first()).toBeVisible(LONG);
+    await expect(boardCards(page).first()).toBeVisible(LONG);
   },
   "candidates-table": async (page) => {
     await page.goto("/candidates");
-    await expect(page.locator(CARD_SELECTOR).first()).toBeVisible(LONG);
+    await expect(boardCards(page).first()).toBeVisible(LONG);
     await page.getByRole("button", { name: "Table" }).click();
     await expect(page.locator("tbody tr").first()).toBeVisible(LONG);
   },
   "candidate-drawer": async (page) => {
     await page.goto("/candidates");
-    const firstCard = page.locator(CARD_SELECTOR).first();
+    const firstCard = boardCards(page).first();
     await expect(firstCard).toBeVisible(LONG);
     await firstCard.locator("button").first().click();
     const drawer = page.getByRole("dialog");
-    // Two <h2>s live in the loaded drawer — Radix's own dialog title
-    // (candidate-drawer.tsx's `<Drawer title={candidate.name}>`) and the
-    // drawer body's own visual heading, both showing the candidate's name.
-    // .first() just needs either one, as proof the drawer finished loading
-    // (vs. still showing CandidateDrawerSkeleton, which has no <h2> at all).
-    await expect(drawer.locator("h2").first()).toBeVisible(LONG);
+    // NOT drawer.locator("h2") — Radix's own dialog title (Drawer's
+    // `title={candidate?.name ?? "Candidate"}` prop) always renders an <h2>,
+    // even while CandidateDrawerSkeleton is still showing (title reads the
+    // literal text "Candidate" until the real name loads) — so that locator
+    // resolves immediately and captures the skeleton, not the profile.
+    // Verified live: this shipped a real bug, a `candidate-drawer` screenshot
+    // showing gray placeholder bars instead of a candidate. The Profile tab
+    // only exists once `candidate` is truthy (CandidateDrawerSkeleton has no
+    // <Tabs> at all), so it's an accurate "real content loaded" signal.
+    await expect(drawer.getByRole("tab", { name: "Profile" })).toBeVisible(LONG);
   },
   "add-candidate": async (page) => {
     await page.goto("/candidates");
-    await expect(page.locator(CARD_SELECTOR).first()).toBeVisible(LONG);
+    await expect(boardCards(page).first()).toBeVisible(LONG);
     await page.getByRole("button", { name: "Add candidate" }).click();
     const dialog = page.getByRole("dialog", { name: "Add candidate" });
     await expect(dialog.getByText("Drop a resume here, or click to browse")).toBeVisible(LONG);
