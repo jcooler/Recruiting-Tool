@@ -48,6 +48,18 @@ function serverMessage(err: unknown): string {
   return err instanceof ApiClientError ? err.message : "Something went wrong. Try again.";
 }
 
+// Must match `trimmedString(40)`/`trimmedString(30)` on `skills`/`tags` in
+// `src/lib/schemas/candidate.ts` exactly — `TagInput` enforces these
+// client-side (see `maxItemLength` on `TagField` below) so a too-long chip
+// is rejected with inline feedback at commit time instead of silently
+// passing the UI and only failing `updateCandidateSchema` at submit, where
+// the per-item zod error lands at a nested path (`errors.skills[i].message`)
+// this dialog doesn't read (only the array-level `errors.skills?.message`
+// is read, which is where a `.max(20)`-count violation lands, not a
+// per-item length one).
+const SKILL_MAX_LENGTH = 40;
+const TAG_MAX_LENGTH = 30;
+
 /**
  * `TagInput` is a controlled value/onChange pair, not a native form
  * element, so it's wired through `useController` rather than `register()`
@@ -61,18 +73,29 @@ function TagField({
   control,
   name,
   placeholder,
+  maxItemLength,
   id,
   ...aria
 }: {
   control: Control<EditFormValues>;
   name: "skills" | "tags";
   placeholder: string;
+  maxItemLength: number;
   id?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 }) {
   const { field } = useController({ control, name });
-  return <TagInput id={id} value={field.value ?? []} onChange={field.onChange} placeholder={placeholder} {...aria} />;
+  return (
+    <TagInput
+      id={id}
+      value={field.value ?? []}
+      onChange={field.onChange}
+      placeholder={placeholder}
+      maxItemLength={maxItemLength}
+      {...aria}
+    />
+  );
 }
 
 export interface EditCandidateDialogProps {
@@ -173,10 +196,10 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
           </Field>
         </div>
         <Field label="Skills" id="candidate-skills" error={errors.skills?.message as string | undefined}>
-          <TagField control={control} name="skills" placeholder="Add a skill" />
+          <TagField control={control} name="skills" placeholder="Add a skill" maxItemLength={SKILL_MAX_LENGTH} />
         </Field>
         <Field label="Tags" id="candidate-tags" error={errors.tags?.message as string | undefined}>
-          <TagField control={control} name="tags" placeholder="Add a tag" />
+          <TagField control={control} name="tags" placeholder="Add a tag" maxItemLength={TAG_MAX_LENGTH} />
         </Field>
       </form>
     </Dialog>
