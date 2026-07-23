@@ -23,9 +23,32 @@ async function firstCardName(col: Locator): Promise<string> {
 }
 
 /**
+ * Presses Tab repeatedly (starting from whatever currently has focus —
+ * callers should start from a fresh navigation/reload so that's "nothing",
+ * putting the very first Tab on the page's first focusable element) until
+ * `target` itself is `document.activeElement`, proving `target` is
+ * actually reachable through the real tab order rather than merely
+ * focus()-able. Fails loudly (rather than looping forever) if the target
+ * is never reached, which is exactly what should happen if it ever drops
+ * out of the tab order.
+ */
+async function tabUntilFocused(page: Page, target: Locator, maxPresses = 80): Promise<void> {
+  for (let i = 0; i < maxPresses; i++) {
+    await page.keyboard.press("Tab");
+    if (await target.evaluate((el) => el === document.activeElement)) return;
+  }
+  throw new Error(`Tab traversal never reached the target element within ${maxPresses} presses`);
+}
+
+/**
  * Keyboard-picks-up `card` (Space), steps one column right (ArrowRight),
  * and drops (Space) — retrying the whole pickup if the step didn't
- * register.
+ * register. The card is reached via real `Tab` traversal (`tabUntilFocused`)
+ * on the first attempt, per the task brief's "focus a card (Tab)" — a
+ * retry (only reachable if the first attempt's *step*, not its focus,
+ * failed — see below) re-focuses directly, since the card never lost
+ * focus in the first place (dnd-kit's `Escape` cancels the drag, it
+ * doesn't blur the node).
  *
  * @dnd-kit/core's KeyboardSensor only starts reporting real
  * `context.collisionRect` values once its own `status` state machine
@@ -49,7 +72,14 @@ async function keyboardStepRight(
   name: string,
   targetColumnLabel: string
 ): Promise<void> {
+  await tabUntilFocused(page, card);
   for (let attempt = 0; attempt < 5; attempt++) {
+    // Re-assert focus (not re-tab): the card still has it from the real Tab
+    // traversal above (or from the previous attempt — Escape cancels the
+    // drag, it doesn't move focus), so this is a same-element no-op except
+    // on a genuine retry, where it re-confirms the precondition rather than
+    // re-deriving reachability, which the first `tabUntilFocused` already
+    // proved.
     await card.focus();
     await page.keyboard.press("Space");
     await expect(liveRegion).toContainText(name);
@@ -109,13 +139,12 @@ test.describe("pipeline board drag interactions", () => {
     await expect(interview.getByText(pointerCardName, { exact: true })).toBeVisible();
     await expect(applied.getByText(pointerCardName, { exact: true })).toHaveCount(0);
 
-    // --- Keyboard drag: focus the (new) first Applied card, Space to pick up,
-    // ArrowRight to step one column right (Applied -> Screening), Space to drop.
-    // `.focus()` rather than repeated Tab presses: dnd-kit's KeyboardSensor
-    // itself only cares that the draggable node has focus when the key
-    // events land (it listens via the listeners spread onto that node, see
-    // candidate-card.tsx) — full page tab-order traversal is exercised
-    // elsewhere and isn't this test's concern.
+    // --- Keyboard drag: real Tab traversal to the (new) first Applied card,
+    // Space to pick up, ArrowRight to step one column right (Applied ->
+    // Screening), Space to drop. `page.reload()` just above means focus
+    // starts fresh (nothing focused), so the Tab traversal inside
+    // `keyboardStepRight` below walks the page's real tab order from its
+    // very first stop.
     const keyboardCardName = await firstCardName(applied);
     const keyboardCard = applied.locator(CARD_SELECTOR).first();
     // dnd-kit's own live region — id is "DndLiveRegion-<n>" (per-instance

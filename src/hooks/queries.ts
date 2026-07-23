@@ -79,21 +79,33 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api<{ ok: true }>("/api/users/logout", { method: "POST" }),
     onSuccess: () => {
-      // `refetchType: "none"`: mark `me` stale without forcing an immediate
-      // refetch on whatever's *currently* mounted — every logout call site
-      // (Topbar, CommandPalette) navigates away in its own `onSuccess`, which
-      // TanStack Query runs after this one, but that navigation is async
-      // (Next.js still has to fetch/compile the target route). An eager
-      // refetch here resolves against the still-mounted AppShell/AuthGate,
-      // which sees the 401 and independently calls `router.replace("/login")`
-      // — racing the caller's own `router.push("/")` and sometimes winning
-      // it, landing signed-out users on /login instead of the marketing
-      // page. Marking stale (not refetching) leaves AuthGate's last-known
-      // "signed in" state alone for the instant it takes to unmount, while
-      // still guaranteeing the next mount of `useMe()` (Landing, or a fresh
-      // AuthGate if the user lands back on a protected route) fetches fresh
-      // rather than serving stale cached auth state.
-      queryClient.invalidateQueries({ queryKey: queryKeys.me, refetchType: "none" });
+      // `removeQueries` (not `invalidateQueries`): every logout call site
+      // (Topbar, CommandPalette) navigates away in its own `onSuccess`,
+      // which TanStack Query runs after this one — but that navigation is
+      // async (Next.js still has to fetch/compile the target route), so the
+      // still-mounted AppShell/AuthGate is briefly still an active observer
+      // of `me` right here. `invalidateQueries` with its default
+      // `refetchType: "active"` would eagerly refetch against exactly that
+      // still-mounted AuthGate, which sees the resulting 401 and
+      // independently calls `router.replace("/login")` — racing the
+      // caller's own `router.push("/")` and sometimes winning it, landing
+      // signed-out users on /login instead of the marketing page.
+      // `invalidateQueries({ refetchType: "none" })` closes that race but
+      // trades it for a *second* one: it leaves the previous user's `me`
+      // data in the cache merely marked stale, and `AuthGate` only gates on
+      // `isLoading`/`isError` — so the *next* login's fresh AuthGate mount
+      // would serve that stale (wrong) identity/role synchronously before
+      // its own background refetch corrects it, i.e. a flash of the
+      // previous session's UI. `removeQueries` avoids both: it deletes the
+      // cache entry outright rather than refetching it, so (a) the
+      // currently-mounted AuthGate here never sees a fetch or an error —
+      // nothing calls `.fetch()` just because a query was removed, only a
+      // fresh *mount* does that (see `shouldFetchOnMount` in
+      // `@tanstack/query-core`), and this AuthGate is not remounting, only
+      // unmounting — and (b) there is no stale data left for the next
+      // mount (Landing, or the next login's AuthGate) to serve; it starts
+      // from a genuine loading state instead.
+      queryClient.removeQueries({ queryKey: queryKeys.me });
     },
   });
 }
