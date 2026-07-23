@@ -35,10 +35,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" data-theme={theme} suppressHydrationWarning>
-      <head>
-        <ThemeScript />
-      </head>
       <body>
+        <ThemeScript />
         <Providers>{children}</Providers>
       </body>
     </html>
