@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { setupTestDb } from "../helpers/db";
 import { apiReq, makeUser, routeParams } from "../helpers/api";
 import UserModel from "@/models/user";
-import { GET as getWorkspace } from "@/../app/api/workspace/route";
+import WorkspaceModel from "@/models/workspace";
+import { GET as getWorkspace, PATCH as patchWorkspace } from "@/../app/api/workspace/route";
 import { GET as getMembers } from "@/../app/api/workspace/members/route";
 import { PATCH as patchMember } from "@/../app/api/workspace/members/[userId]/route";
 
@@ -98,5 +99,52 @@ describe("PATCH /api/workspace/members/[userId]", () => {
     );
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe("You cannot change your own role");
+  });
+});
+
+describe("PATCH /api/workspace", () => {
+  it("admin renames the workspace: 200 with the new name and it is persisted", async () => {
+    const { token, workspace } = await makeUser("admin");
+
+    const res = await patchWorkspace(
+      apiReq("PATCH", "/api/workspace", { token, body: { name: "Acme Talent" } }),
+      P
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ id: workspace._id.toString(), name: "Acme Talent", isDemo: false });
+
+    const updated = await WorkspaceModel.findById(workspace._id).exec();
+    expect(updated!.name).toBe("Acme Talent");
+  });
+
+  it("recruiter gets 403 and the name is unchanged", async () => {
+    const { token, workspace } = await makeUser("recruiter");
+
+    const res = await patchWorkspace(
+      apiReq("PATCH", "/api/workspace", { token, body: { name: "Acme Talent" } }),
+      P
+    );
+    expect(res.status).toBe(403);
+
+    const unchanged = await WorkspaceModel.findById(workspace._id).exec();
+    expect(unchanged!.name).toBe(workspace.name);
+  });
+
+  it("rejects an empty name with 400", async () => {
+    const { token } = await makeUser("admin");
+
+    const res = await patchWorkspace(apiReq("PATCH", "/api/workspace", { token, body: { name: "  " } }), P);
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects unknown fields (.strict())", async () => {
+    const { token } = await makeUser("admin");
+
+    const res = await patchWorkspace(
+      apiReq("PATCH", "/api/workspace", { token, body: { name: "Acme Talent", isDemo: true } }),
+      P
+    );
+    expect(res.status).toBe(400);
   });
 });

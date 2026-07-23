@@ -69,10 +69,22 @@ export function Topbar({ onOpenNav }: TopbarProps) {
         </Kbd>
       </button>
 
-      {/* `shrink-0`: the search button above is the row's only flexible/truncating
-          element — ThemeToggle's full-text label has no wrap handling of its own,
-          so without this the flex row would shrink it instead and wrap its text
-          across multiple lines at narrow (mobile) widths. */}
+      {/* Current workspace name (renamed from Settings → Workspace). Hidden below
+          `sm` where the search button itself is still flex-1 and there's no room;
+          `min-w-0` lets it truncate instead of forcing the row wider. */}
+      {me?.workspaceName && (
+        <p
+          className="hidden min-w-0 flex-1 truncate text-sm font-medium text-text-2 sm:block"
+          title={me.workspaceName}
+        >
+          {me.workspaceName}
+        </p>
+      )}
+
+      {/* `shrink-0`: the search button and workspace name above are the row's only
+          flexible/truncating elements — ThemeToggle's full-text label has no wrap
+          handling of its own, so without this the flex row would shrink it instead
+          and wrap its text across multiple lines at narrow (mobile) widths. */}
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <ThemeToggle />
 
