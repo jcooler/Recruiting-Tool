@@ -64,7 +64,14 @@ export function Topbar({ onOpenNav }: TopbarProps) {
       >
         <IconSearch size={15} className="shrink-0" />
         <span className="min-w-0 flex-1 truncate text-left">Search or jump to…</span>
-        <Kbd aria-hidden="true" className="shrink-0">
+        {/* hidden below sm: a ⌘/Ctrl hint is meaningless on a touchscreen
+            with no physical keyboard, and at mobile widths there wasn't
+            room for it anyway — verified live, it rendered with the "K"
+            visibly clipped off (this button is flex-1/min-w-0 in a packed
+            topbar row). Dropping it here also gives the truncating label
+            above actual room to show text on mobile instead of collapsing
+            to nothing. */}
+        <Kbd aria-hidden="true" className="hidden shrink-0 sm:inline">
           ⌘K
         </Kbd>
       </button>

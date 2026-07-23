@@ -79,7 +79,14 @@ export function ThemeToggle() {
       className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-2 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
       {theme === "dark" ? <MoonIcon /> : <SunIcon />}
-      <span>{label}</span>
+      {/* hidden below sm: this button's icon+aria-label carry the control on
+          its own (a sun/moon toggle is a widely-recognized convention) —
+          the full label competing for space in the app shell's mobile
+          topbar (alongside the nav trigger, search, and account menu) left
+          too little room for the search button's own "⌘K" hint, which
+          rendered with the K visibly clipped. Verified live: hiding this
+          span reclaims that space at exactly the width it was needed. */}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
