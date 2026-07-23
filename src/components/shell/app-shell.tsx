@@ -43,6 +43,34 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [setPaletteOpen]);
 
+  // Scopes document-level scroll-locking to exactly while this shell is
+  // mounted (authenticated routes only — never the marketing/auth pages,
+  // which are ordinary tall documents that need real page scroll).
+  //
+  // The root wrapper below is `h-screen overflow-hidden`, which correctly
+  // caps *its own* box and every flex descendant down to `<main>` (each one
+  // reports a bounded scrollHeight matching the 900px viewport — verified
+  // live via computed styles). But none of that constrains `<html>` itself:
+  // with no explicit height/overflow on `html`/`body` (app/globals.css only
+  // sets background/color on them), Chromium's root-scroller resolution
+  // still let `document.documentElement.scrollHeight` balloon to the full
+  // unclipped height of deeply-nested `overflow-y-auto` content (e.g. a
+  // pipeline board with enough candidates) — confirmed live: a mouse-wheel
+  // scroll over the *sidebar* (nowhere near `#main`) moved the whole page,
+  // scrolling the sidebar and topbar off-screen instead of just `#main`'s
+  // own content scrolling internally. Locking overflow on the true root
+  // element removes `<html>` as a candidate scrolling element entirely, so
+  // every scroll gesture routes to the nearest real `overflow-y-auto`
+  // ancestor (`#main`, or the sidebar nav) as intended.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, []);
+
   return (
     <>
       <a href="#main" className={SKIP_LINK_CLASS}>
@@ -53,7 +81,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         {me?.isDemo && <DemoBanner me={me} />}
         <div className="flex min-h-0 flex-1">
           <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
+          {/* min-h-0 (not just the row above's): a column-direction flex
+              item's default min-height is `auto`, i.e. it refuses to shrink
+              below its own content's natural height — without this, a tall
+              child (main, below) props this column open past h-screen's
+              fixed height instead of yielding to `main`'s own scroll, and
+              the whole page starts scrolling as a unit instead of just
+              `main`. Verified live: a full-page screenshot of a
+              many-candidate pipeline board rendered 3245px tall (sidebar and
+              topbar scrolling away with it) instead of clipping to the
+              900px viewport with the board scrolling internally. Every link
+              in a nested flex/scroll chain needs its own min-h-0 — the outer
+              min-h-0 above only fixes its own level. */}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <Topbar onOpenNav={() => setMobileNavOpen(true)} />
             {/* tabIndex 0, not -1: this region also scrolls (overflow-y-auto)
                 whenever a page's content outgrows the viewport (e.g.
@@ -64,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 putting it in the normal tab order right after the skip
                 link, so a keyboard user can reach it and scroll with
                 arrow/Page keys on any page tall enough to need it. */}
-            <main id="main" tabIndex={0} className="flex-1 overflow-y-auto px-6 py-6 md:px-8 focus:outline-none">
+            <main id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 md:px-8 focus:outline-none">
               {children}
             </main>
           </div>
