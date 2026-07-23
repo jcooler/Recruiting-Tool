@@ -24,10 +24,11 @@ export const GET = withAuth(async (_req, ctx) => {
 
 export const PATCH = withAuth(
   async (req: NextRequest, ctx) => {
+    const { name } = renameWorkspaceSchema.parse(await req.json());
+
     const workspace = await WorkspaceModel.findById(ctx.user.workspaceId).exec();
     if (!workspace) throw new ApiError(401, "You must be logged in to access this resource");
 
-    const { name } = renameWorkspaceSchema.parse(await req.json());
     workspace.name = name;
     await workspace.save();
 
