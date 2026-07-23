@@ -12,6 +12,7 @@ import {
 } from "react";
 import { cn } from "@/lib/cn";
 import { IconChevronDown, IconX } from "./icons";
+import { resolveTagCommit } from "./tag-input-logic";
 
 const CONTROL_BASE =
   "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text " +
@@ -59,6 +60,8 @@ export interface TagInputProps {
   id?: string;
   placeholder?: string;
   className?: string;
+  /** Rejects a commit longer than this (see the inline message that appears below the input) instead of silently accepting a chip the field's schema will reject anyway — match the corresponding zod field's max length exactly. */
+  maxItemLength?: number;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 }
@@ -81,15 +84,36 @@ export interface TagInputProps {
  * affordance to discover. Every chip's remove control also has its own
  * `aria-label` for keyboard/screen-reader users who aren't relying on that
  * shortcut.
+ *
+ * `maxItemLength` (when passed) is enforced here via the pure
+ * `resolveTagCommit` (`./tag-input-logic.ts`) — a too-long commit is
+ * rejected with inline feedback rather than silently accepted and left to
+ * fail server-side validation at a nested error path `Field` never renders
+ * (see task-26 review).
  */
-export function TagInput({ value, onChange, id, placeholder, className, ...aria }: TagInputProps) {
+export function TagInput({
+  value,
+  onChange,
+  id,
+  placeholder,
+  className,
+  maxItemLength,
+  "aria-describedby": describedBy,
+  ...aria
+}: TagInputProps) {
   const [draft, setDraft] = useState("");
+  const [tooLong, setTooLong] = useState(false);
 
   function commit(raw: string) {
-    const tag = raw.trim();
+    const result = resolveTagCommit(raw, value, maxItemLength);
+    if (result.tooLong) {
+      // Keep the draft (don't clear it) so the user can shorten it in place.
+      setTooLong(true);
+      return;
+    }
+    setTooLong(false);
     setDraft("");
-    if (!tag || value.includes(tag)) return;
-    onChange([...value, tag]);
+    if (result.next) onChange(result.next);
   }
 
   function removeAt(index: number) {
@@ -106,41 +130,55 @@ export function TagInput({ value, onChange, id, placeholder, className, ...aria 
     }
   }
 
+  const errorId = id ? `${id}-too-long` : undefined;
+  const combinedDescribedBy = [describedBy, tooLong ? errorId : undefined].filter(Boolean).join(" ") || undefined;
+
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1.5 transition-colors",
-        "focus-within:outline-none focus-within:outline-2 focus-within:outline-accent focus-within:outline-offset-2",
-        className
-      )}
-    >
-      {value.map((tag, i) => (
-        <span
-          key={`${tag}-${i}`}
-          className="inline-flex items-center gap-1 rounded-full bg-surface-2 py-0.5 pl-2.5 pr-1 text-xs font-medium text-text-2"
-        >
-          {tag}
-          <button
-            type="button"
-            onClick={() => removeAt(i)}
-            aria-label={`Remove ${tag}`}
-            className="flex size-4 items-center justify-center rounded-full text-text-3 transition-colors hover:bg-border hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent"
+    <div className="flex flex-col gap-1">
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1.5 transition-colors",
+          "focus-within:outline-none focus-within:outline-2 focus-within:outline-accent focus-within:outline-offset-2",
+          className
+        )}
+      >
+        {value.map((tag, i) => (
+          <span
+            key={`${tag}-${i}`}
+            className="inline-flex items-center gap-1 rounded-full bg-surface-2 py-0.5 pl-2.5 pr-1 text-xs font-medium text-text-2"
           >
-            <IconX size={10} />
-          </button>
-        </span>
-      ))}
-      <input
-        id={id}
-        type="text"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => commit(draft)}
-        placeholder={value.length === 0 ? placeholder : undefined}
-        className="min-w-[10ch] flex-1 border-0 bg-transparent p-1 text-sm text-text placeholder:text-text-3 focus:outline-none"
-        {...aria}
-      />
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeAt(i)}
+              aria-label={`Remove ${tag}`}
+              className="flex size-4 items-center justify-center rounded-full text-text-3 transition-colors hover:bg-border hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <IconX size={10} />
+            </button>
+          </span>
+        ))}
+        <input
+          id={id}
+          type="text"
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            if (tooLong) setTooLong(false);
+          }}
+          onKeyDown={handleKeyDown}
+          onBlur={() => commit(draft)}
+          placeholder={value.length === 0 ? placeholder : undefined}
+          aria-describedby={combinedDescribedBy}
+          className="min-w-[10ch] flex-1 border-0 bg-transparent p-1 text-sm text-text placeholder:text-text-3 focus:outline-none"
+          {...aria}
+        />
+      </div>
+      {tooLong && (
+        <p role="alert" id={errorId} className="text-xs text-danger">
+          {maxItemLength}-character limit — shorten it, then press Enter or comma to add it.
+        </p>
+      )}
     </div>
   );
 }
