@@ -167,6 +167,8 @@ export const IconChevronDown = makeIcon(<path d="M6 9.5l6 6 6-6" />);
 
 export const IconArrowRight = makeIcon(<path d="M4 12h16M13 5.5l7 6.5-7 6.5" />);
 
+export const IconMenu = makeIcon(<path d="M4 6.5h16M4 12h16M4 17.5h16" />);
+
 export const IconClock = makeIcon(
   <>
     <circle cx="12" cy="12" r="8.5" />
