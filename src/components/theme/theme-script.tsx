@@ -24,8 +24,7 @@ import Script from "next/script";
  * Google's main crawler) still get correct metadata within milliseconds of
  * load. Left as Next's intentional default rather than widening
  * `htmlLimitedBots` to also match Lighthouse/regular browsers, which would
- * defeat the feature purely to chase the audit score — see
- * `.superpowers/sdd/task-33-report.md` for the full investigation.
+ * defeat the feature purely to chase the audit score.
  */
 export function ThemeScript() {
   const code = `(function(){try{

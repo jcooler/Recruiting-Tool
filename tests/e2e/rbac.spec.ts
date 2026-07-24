@@ -41,12 +41,15 @@ test.describe("role-based access control", () => {
     await page.goto("/jobs");
     await expect(page.getByRole("button", { name: "New job" })).toHaveCount(0);
 
-    // --- Drag disabled: no role="button" from dnd-kit on a read-only card ---
+    // --- Drag disabled: no role="group" from dnd-kit on a read-only card ---
     // (candidate-card.tsx spreads dnd-kit's listeners/attributes — which is
-    // where role="button" comes from — only when canEdit is true.)
+    // where role="group" comes from, via useDraggable's `attributes: {
+    // role: "group" }` override — only when canEdit is true. Matches
+    // board.spec.ts:210's identical assertion for a rejected, read-only
+    // card.)
     await page.goto("/candidates");
     const firstCard = page.locator(CARD_SELECTOR).first();
-    await expect(firstCard).not.toHaveAttribute("role", "button");
+    await expect(firstCard).not.toHaveAttribute("role", "group");
 
     // --- Note composer: not canEdit-gated, works for every signed-in role ---
     const candidateName = (await firstCard.locator("button").first().innerText()).trim();

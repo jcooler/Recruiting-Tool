@@ -2,6 +2,7 @@
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCorners,
   useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useState } from "react";
+import { useReducedMotion } from "framer-motion";
 import { STAGES, STAGE_LABELS, type Stage } from "@/lib/types";
 import type { CandidateDto, JobDto } from "@/lib/dto";
 import type { MoveStagePayload } from "@/hooks/queries";
@@ -21,6 +22,11 @@ export interface BoardViewProps {
 
 export function BoardView({ candidates, jobsById, canEdit, mode, onOpen, onMove }: BoardViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  // Same `prefers-reduced-motion` signal every other animated piece of the
+  // app reads (candidate-card.tsx, drawer.tsx, analytics-view.tsx) — dnd-kit's
+  // `DragOverlay` runs its own drop-animation independently of Framer
+  // Motion, so it needs its own opt-out rather than inheriting one.
+  const reduceMotion = useReducedMotion();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: columnCoordinates })
@@ -69,7 +75,9 @@ export function BoardView({ candidates, jobsById, canEdit, mode, onOpen, onMove 
             jobsById={jobsById} canEdit={canEdit} mode={mode} onOpen={onOpen} onMove={onMove} />
         ))}
       </ol>
-      <DragOverlay>{active ? <CandidateCard candidate={active} jobsById={jobsById} overlay /> : null}</DragOverlay>
+      <DragOverlay dropAnimation={reduceMotion ? null : undefined}>
+        {active ? <CandidateCard candidate={active} jobsById={jobsById} overlay /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }
