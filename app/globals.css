@@ -83,6 +83,25 @@
 
 html, body { background: var(--bg); color: var(--text); }
 
+/* Radix modal layers (dropdown menus, dialogs, the candidate drawer) mount
+   react-remove-scroll-bar, which compensates for the body scrollbar it hides
+   with `body[data-scroll-locked] { margin-right: <gap>px !important }`, where
+   gap = window.innerWidth - documentElement.clientWidth. Under device
+   emulation (Chrome DevTools device toolbar, Playwright device descriptors)
+   innerWidth can transiently report the un-emulated host-window width, the
+   gap computes to hundreds of pixels, and body's border-box collapses to
+   0 width — the overflow-hidden app shell then clips the whole app to
+   nothing while the position:fixed menu keeps painting ("app goes black
+   behind the menu", 2026-07-24). Every surface that can open a modal layer
+   lives inside the h-screen/overflow-hidden app shell, where body never has
+   a scrollbar to compensate for, so the compensation is neutralized outright.
+   Higher specificity than the library's injected `body[data-scroll-locked]`
+   rule; both are !important, so specificity decides. Pinned by
+   tests/e2e/touch.spec.ts. */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
