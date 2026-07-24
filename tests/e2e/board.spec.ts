@@ -169,6 +169,27 @@ test.describe("pipeline board drag interactions", () => {
 
     await expect(offer.getByText(menuCardName, { exact: true })).toBeVisible();
     await expect(applied.getByText(menuCardName, { exact: true })).toHaveCount(0);
+
+    // --- Defect-2 regression (task-33c): opening a card's drawer, closing it,
+    // then immediately opening THAT SAME card's actions menu used to silently
+    // reopen the drawer — a stale-`searchParams` race between PipelineView's
+    // URL -> store read-effect and CandidateDrawer's store -> URL write-effect
+    // (see pipeline-view.tsx's `consumedInitialCandidateParam` guard). The
+    // reopened drawer is full-width at mobile, so the symptom read as "the
+    // whole app going black" behind the still-open menu (only the menu, a
+    // later/higher-painting portal, stayed visible).
+    const raceCardName = await firstCardName(applied);
+    const raceCard = applied.locator(CARD_SELECTOR).first();
+    const drawer = page.getByRole("dialog");
+
+    await raceCard.locator("button").first().click(); // the name button opens the drawer
+    await expect(drawer).toBeVisible();
+    await page.getByRole("button", { name: "Close panel" }).click();
+    await expect(drawer).not.toBeVisible();
+
+    await raceCard.getByRole("button", { name: `Actions for ${raceCardName}` }).click();
+    await expect(page.getByRole("menuitem", { name: "View profile" })).toBeVisible();
+    await expect(drawer).not.toBeVisible();
   });
 });
 
