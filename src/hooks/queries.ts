@@ -59,7 +59,15 @@ export function useLogin() {
   return useMutation({
     mutationFn: (body: LoginInput) => api<UserDto>("/api/users/login", { method: "POST", json: body }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      // Logging in establishes a brand-new identity — invalidate the whole
+      // cache (not just `me`), same reasoning as `useSwitchDemoRole` below:
+      // every other cached query (candidates, jobs, analytics, members,
+      // workspace) belongs to whatever workspace/session was previously
+      // active on this browser (a prior demo session, a previously logged-in
+      // user on a shared machine, etc.) and would otherwise keep serving
+      // that stale data under the new identity until something else
+      // happened to refetch it.
+      queryClient.invalidateQueries();
     },
   });
 }
@@ -69,7 +77,8 @@ export function useSignup() {
   return useMutation({
     mutationFn: (body: SignupInput) => api<UserDto>("/api/users/signup", { method: "POST", json: body }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      // Same reasoning as `useLogin` — a fresh signup is a new identity too.
+      queryClient.invalidateQueries();
     },
   });
 }
@@ -79,7 +88,8 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api<{ ok: true }>("/api/users/logout", { method: "POST" }),
     onSuccess: () => {
-      // `removeQueries` (not `invalidateQueries`): every logout call site
+      // `clear()` (not `invalidateQueries`, and not a narrower
+      // `removeQueries({ queryKey: queryKeys.me })`): every logout call site
       // (Topbar, CommandPalette) navigates away in its own `onSuccess`,
       // which TanStack Query runs after this one — but that navigation is
       // async (Next.js still has to fetch/compile the target route), so the
@@ -91,21 +101,34 @@ export function useLogout() {
       // caller's own `router.push("/")` and sometimes winning it, landing
       // signed-out users on /login instead of the marketing page.
       // `invalidateQueries({ refetchType: "none" })` closes that race but
-      // trades it for a *second* one: it leaves the previous user's `me`
-      // data in the cache merely marked stale, and `AuthGate` only gates on
-      // `isLoading`/`isError` — so the *next* login's fresh AuthGate mount
-      // would serve that stale (wrong) identity/role synchronously before
-      // its own background refetch corrects it, i.e. a flash of the
-      // previous session's UI. `removeQueries` avoids both: it deletes the
-      // cache entry outright rather than refetching it, so (a) the
-      // currently-mounted AuthGate here never sees a fetch or an error —
-      // nothing calls `.fetch()` just because a query was removed, only a
-      // fresh *mount* does that (see `shouldFetchOnMount` in
-      // `@tanstack/query-core`), and this AuthGate is not remounting, only
-      // unmounting — and (b) there is no stale data left for the next
-      // mount (Landing, or the next login's AuthGate) to serve; it starts
-      // from a genuine loading state instead.
-      queryClient.removeQueries({ queryKey: queryKeys.me });
+      // trades it for a *second* one: it leaves the previous user's data in
+      // the cache merely marked stale, and observers like `AuthGate` only
+      // gate on `isLoading`/`isError` — so the *next* login's fresh mount
+      // would serve that stale (wrong) identity/role/workspace data
+      // synchronously before its own background refetch corrects it, i.e. a
+      // flash of the previous session's UI. Removal (not invalidation, in
+      // either flavor) avoids both: it deletes cache entries outright rather
+      // than refetching them, so (a) the currently-mounted AuthGate here
+      // never sees a fetch or an error — nothing calls `.fetch()` just
+      // because a query was removed, only a fresh *mount* does that (see
+      // `shouldFetchOnMount` in `@tanstack/query-core`), and this AuthGate
+      // is not remounting, only unmounting — and (b) there is no stale data
+      // left for the next mount (Landing, or the next login's AuthGate) to
+      // serve; it starts from a genuine loading state instead. `clear()`
+      // (`queryCache.clear()` + `mutationCache.clear()`, per
+      // `@tanstack/query-core`) is the same removal mechanism as
+      // `removeQueries` — `queryCache.clear()` just calls its own internal
+      // `remove()` once per cached query, the identical `query.destroy()` +
+      // map-delete + `"removed"` notification `removeQueries` uses — just
+      // applied to every cached query instead of only `me`. That widening
+      // matters here: candidates/jobs/analytics/members/workspace data
+      // belongs to the now-ended session too, and narrowly removing only
+      // `me` left all of it cached (merely orphaned, not cleared) for
+      // whatever session/identity mounts next — a demo session or a
+      // different user on a shared machine would otherwise briefly see the
+      // previous session's leftover cached lists before their own queries
+      // resolve.
+      queryClient.clear();
     },
   });
 }
@@ -115,7 +138,9 @@ export function useStartDemo() {
   return useMutation({
     mutationFn: () => api<{ ok: true }>("/api/demo/start", { method: "POST" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      // Starting a demo session is also a new identity (a fresh throwaway
+      // workspace) — same reasoning as `useLogin`/`useSignup`.
+      queryClient.invalidateQueries();
     },
   });
 }
@@ -169,6 +194,9 @@ export function useCreateJob() {
     mutationFn: (body: CreateJobInput) => api<JobDto>("/api/jobs", { method: "POST", json: body }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
+      // A new job changes `totals.openJobs` (computeAnalytics) — see the
+      // `queryKeys.analytics` note on `useCreateCandidate` below.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
@@ -180,6 +208,12 @@ export function useUpdateJob(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
       queryClient.invalidateQueries({ queryKey: queryKeys.job(id) });
+      // `status` (open/closed) feeds `totals.openJobs` — the only job field
+      // `computeAnalytics` reads. Invalidating unconditionally (not just
+      // when `status` is in the patch) matches every other mutation hook in
+      // this file, which invalidate by side-effect-shape rather than
+      // diffing the actual patch body.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
@@ -191,6 +225,11 @@ export function useDeleteJob() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      // Deleting a job cascades to every candidate in its pipeline
+      // server-side (see DELETE /api/jobs/[jobId]) — both `totals.openJobs`
+      // and every candidate-derived figure (funnel/timeInStage/bySource/
+      // velocity/totals.candidates) can shift.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
@@ -263,6 +302,14 @@ export function useCreateCandidate() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
+      // `computeAnalytics` (src/lib/analytics.ts) aggregates every
+      // candidate's `stage`/`rejected`/`source`/`stageHistory` — a new
+      // candidate changes `totals.candidates`, `funnel`, and `bySource` at
+      // minimum, so every candidate-creating/moving/deleting mutation below
+      // invalidates `queryKeys.analytics` too. Notes and rating are
+      // deliberately excluded (`useAddNote`/`useSetRating`, further down) —
+      // `computeAnalytics` reads neither field.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
@@ -274,6 +321,9 @@ export function useUpdateCandidate(id: string) {
       api<CandidateDto>(`/api/candidates/${id}`, { method: "PATCH", json: body }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      // `source` is editable here and feeds `bySource` — see the
+      // `queryKeys.analytics` note on `useCreateCandidate` above.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
@@ -285,6 +335,8 @@ export function useDeleteCandidate() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
+      // See the `queryKeys.analytics` note on `useCreateCandidate` above.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
@@ -364,6 +416,14 @@ export function useMoveStage() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] }); // stage counts
+      // A stage move (or reject/restore) is exactly what `funnel`,
+      // `timeInStage`, `velocity`, and `totals.{active,hired,rejected}`
+      // track — see the `queryKeys.analytics` note on `useCreateCandidate`
+      // above. `onSettled` (not `onSuccess`): analytics should reconcile
+      // against the server's actual state whether the optimistic move was
+      // confirmed or rolled back, same as the `["candidates"]`/`["jobs"]`
+      // invalidations right above it.
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
     },
   });
 }
