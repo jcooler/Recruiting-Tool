@@ -6,7 +6,7 @@ App Router codebase with MongoDB, Zod validation, and cookie-based sessions.
 
 This repository originally shipped as a split app — an Express/MongoDB API (`backend/`) and a
 separate Next.js 14 frontend (`frontend/`) that proxied to it. Both were rebuilt from scratch as a
-single Next.js 15 application (this repo root) across a 30-task plan: same product, one codebase,
+single Next.js 15 application (this repo root) across a 33-task plan: same product, one codebase,
 server-rendered routes, API route handlers, and a shared auth/validation/rate-limit pipeline. The
 legacy split apps were deleted once "before" screenshots were captured (see
 [Screenshots](#screenshots)) — their history is still in git.
@@ -49,7 +49,7 @@ workspace with seed data and an admin session that expires after 24 hours — no
   + `react-virtual`, `react-hook-form`, Recharts, Framer Motion, `cmdk`
 - **Resume parsing:** `pdf-parse`, `mammoth` (DOCX)
 - **Testing:** Vitest (unit/integration, real Mongo semantics via `mongodb-memory-server`),
-  Playwright (`test:e2e` script — not yet configured; arrives in a later task)
+  Playwright (`test:e2e` script — 7 specs; see [Testing](#testing) below)
 
 ## Architecture
 
@@ -198,8 +198,10 @@ Exceeding a limit returns `429` with a `Retry-After` header.
 
 ### Headers (`next.config.ts`, applied to every route)
 
-`Content-Security-Policy` (strict `default-src 'self'`; `'unsafe-eval'` only in dev, for React
-Refresh), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+`Content-Security-Policy` (strict `default-src 'self'`; `script-src` allows `'unsafe-inline'` in
+every environment, including production — `next/script`'s inline theme-flash-prevention snippet
+(`ThemeScript`) needs it, since this app sets no CSP nonce — plus `'unsafe-eval'` in dev only, for
+React Refresh; see `next.config.ts`), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
 `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`,
 `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
 
