@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { IconX } from "./icons";
 
@@ -11,6 +11,26 @@ export interface DialogProps {
   description?: string;
   children?: ReactNode;
   footer?: ReactNode;
+  /**
+   * Explicit restore-focus target, for a dialog launched from a dropdown
+   * menu item's `onSelect` (job-card/candidate-drawer's Edit/Delete menus)
+   * rather than a direct button click. The default behavior below —
+   * capturing `document.activeElement` in an effect that runs after `open`
+   * flips true — races Radix DropdownMenu's own close/unmount: by the time
+   * this effect's render commits, the menu item that called `onSelect` has
+   * already started unmounting (Radix closes the menu as part of the same
+   * selection), so `document.activeElement` has already fallen through to
+   * `<body>` — confirmed live (see task fix-wave report). Pass the
+   * dropdown *trigger* button's ref here (not the item — it unmounts; the
+   * trigger doesn't) so the caller captures the correct restore target
+   * synchronously, inside the same event handler that opens the dialog,
+   * before Radix has a chance to move focus anywhere. Omit for dialogs
+   * opened by a direct, still-mounted button click (e.g. `JobHeader`'s Edit/
+   * Delete buttons, "Add candidate", "New job") — those work correctly with
+   * the default `document.activeElement` capture, since nothing unmounts
+   * the opener between click and this effect running.
+   */
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -19,7 +39,9 @@ export interface DialogProps {
  * is used (it focuses `context.triggerRef`, which stays null for our
  * trigger-less controlled contract, while also suppressing FocusScope's own
  * fallback restore via `preventDefault()`). So we record whatever was
- * focused right before `open` became true and refocus it on close.
+ * focused right before `open` became true and refocus it on close — or, for
+ * dropdown-launched dialogs where that capture is unreliable, whatever
+ * `restoreFocusRef` points to (see its doc comment above).
  * `DialogTitle` is always rendered (required for the dialog to have an
  * accessible name) — pass `description` when body copy alone wouldn't make
  * the dialog's purpose obvious to a screen reader user.
@@ -32,14 +54,15 @@ export interface DialogProps {
  * no way to reach it — verified live). Same header/scrollable-body/footer
  * split `Drawer` (./drawer.tsx) already uses for the identical problem.
  */
-export function Dialog({ open, onOpenChange, title, description, children, footer }: DialogProps) {
+export function Dialog({ open, onOpenChange, title, description, children, footer, restoreFocusRef }: DialogProps) {
   const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (open) {
-      openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      openerRef.current =
+        restoreFocusRef?.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
     }
-  }, [open]);
+  }, [open, restoreFocusRef]);
 
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -76,7 +99,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
             aria-label="Close dialog"
             className={
               "absolute right-4 top-4 rounded-md p-1.5 text-text-3 transition-colors hover:bg-surface-2 hover:text-text " +
-              "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
             }
           >
             <IconX size={16} />

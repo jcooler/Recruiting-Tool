@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { ApiClientError } from "@/lib/api-client";
 import type { JobDto } from "@/lib/dto";
 import { useDeleteJob, useUpdateJob } from "@/hooks/queries";
@@ -86,6 +86,8 @@ export interface DeleteJobDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Called after a successful delete — e.g. the detail page navigates back to `/jobs`. */
   onDeleted?: () => void;
+  /** See `Dialog`'s doc comment — `JobCard` passes its dropdown trigger's ref; `JobHeader`'s direct Delete button omits this and gets the default `document.activeElement` capture. */
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -94,7 +96,7 @@ export interface DeleteJobDialogProps {
  * its pipeline server-side (see `DELETE /api/jobs/[jobId]`) — the copy
  * says so explicitly rather than leaving that as a surprise.
  */
-export function DeleteJobDialog({ job, open, onOpenChange, onDeleted }: DeleteJobDialogProps) {
+export function DeleteJobDialog({ job, open, onOpenChange, onDeleted, restoreFocusRef }: DeleteJobDialogProps) {
   const deleteJob = useDeleteJob();
 
   async function handleDelete() {
@@ -116,6 +118,7 @@ export function DeleteJobDialog({ job, open, onOpenChange, onDeleted }: DeleteJo
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
+      restoreFocusRef={restoreFocusRef}
       title="Delete this job?"
       description={`This permanently deletes "${job.title}" and every candidate in its pipeline. This can't be undone.`}
       footer={
@@ -135,7 +138,8 @@ export function DeleteJobDialog({ job, open, onOpenChange, onDeleted }: DeleteJo
 export interface JobCardProps {
   job: JobDto;
   canEdit: boolean;
-  onEdit: (job: JobDto) => void;
+  /** `opener` is this card's dropdown-trigger button (still-mounted, unlike the menu item that called this) — the caller should forward it as the shared edit dialog's `restoreFocusRef`. See `Dialog`'s doc comment. */
+  onEdit: (job: JobDto, opener: HTMLElement | null) => void;
 }
 
 /**
@@ -156,6 +160,10 @@ export function JobCard({ job, canEdit, onEdit }: JobCardProps) {
   // "Close/Reopen role" opens no dialog, so it keeps the normal
   // refocus-the-trigger behavior a keyboard user expects.
   const suppressMenuAutoFocus = useRef(false);
+  // The dropdown trigger itself, passed to Edit/Delete's dialogs as
+  // `restoreFocusRef` — see `Dialog`'s doc comment for why this is needed
+  // instead of the default `document.activeElement` capture.
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   function toggleStatus() {
     const next = job.status === "open" ? "closed" : "open";
@@ -176,9 +184,10 @@ export function JobCard({ job, canEdit, onEdit }: JobCardProps) {
           <Dropdown>
             <DropdownTrigger asChild>
               <button
+                ref={triggerRef}
                 type="button"
                 aria-label={`Actions for ${job.title}`}
-                className="flex size-7 items-center justify-center rounded-md text-text-3 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="flex size-7 items-center justify-center rounded-md text-text-3 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 <IconDots size={16} />
               </button>
@@ -194,7 +203,7 @@ export function JobCard({ job, canEdit, onEdit }: JobCardProps) {
               <DropdownItem
                 onSelect={() => {
                   suppressMenuAutoFocus.current = true;
-                  onEdit(job);
+                  onEdit(job, triggerRef.current);
                 }}
               >
                 Edit
@@ -217,7 +226,7 @@ export function JobCard({ job, canEdit, onEdit }: JobCardProps) {
 
       <Link
         href={`/jobs/${job.id}`}
-        className="group block rounded-md pr-8 focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        className="group block rounded-md pr-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <h3 className="truncate text-sm font-semibold text-text group-hover:text-accent">{job.title}</h3>
         <p className="mt-1 truncate text-sm text-text-3">
@@ -232,7 +241,9 @@ export function JobCard({ job, canEdit, onEdit }: JobCardProps) {
         <StageFunnel counts={job.counts} />
       </div>
 
-      {canEdit && <DeleteJobDialog job={job} open={confirmOpen} onOpenChange={setConfirmOpen} />}
+      {canEdit && (
+        <DeleteJobDialog job={job} open={confirmOpen} onOpenChange={setConfirmOpen} restoreFocusRef={triggerRef} />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCan } from "@/hooks/use-can";
 import { useJobs } from "@/hooks/queries";
 import type { JobDto } from "@/lib/dto";
@@ -23,13 +23,22 @@ export function JobsView() {
   const jobs = useJobs();
   const [formOpen, setFormOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobDto | undefined>(undefined);
+  // The specific JobCard's dropdown trigger that launched "Edit" — passed to
+  // the one shared JobFormDialog instance as `restoreFocusRef`. See
+  // `Dialog`'s doc comment. Cleared on `openCreate` so the "New job" button
+  // (a direct click, not dropdown-launched) falls back to Dialog's default
+  // `document.activeElement` capture instead of reusing a stale opener from
+  // a previous edit.
+  const editOpenerRef = useRef<HTMLElement | null>(null);
 
   function openCreate() {
+    editOpenerRef.current = null;
     setEditingJob(undefined);
     setFormOpen(true);
   }
 
-  function openEdit(job: JobDto) {
+  function openEdit(job: JobDto, opener: HTMLElement | null) {
+    editOpenerRef.current = opener;
     setEditingJob(job);
     setFormOpen(true);
   }
@@ -89,7 +98,14 @@ export function JobsView() {
         </div>
       )}
 
-      {canEdit && <JobFormDialog open={formOpen} onOpenChange={setFormOpen} job={editingJob} />}
+      {canEdit && (
+        <JobFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          job={editingJob}
+          restoreFocusRef={editOpenerRef}
+        />
+      )}
     </div>
   );
 }
