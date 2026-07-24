@@ -9,8 +9,8 @@ export const runtime = "nodejs";
 
 export const PATCH = withAuth(
   async (req: NextRequest, ctx) => {
-    const candidate = await findCandidateOr404(ctx);
     const input = ratingSchema.parse(await req.json());
+    const candidate = await findCandidateOr404(ctx);
 
     const meta = `${candidate.rating} → ${input.rating}`;
     candidate.rating = input.rating;

@@ -21,8 +21,9 @@ export const GET = withAuth(async (_req, ctx) => Response.json(toJobDto(await fi
 
 export const PATCH = withAuth(
   async (req: NextRequest, ctx) => {
+    const input = updateJobSchema.parse(await req.json());
     const job = await findJobOr404(ctx);
-    Object.assign(job, updateJobSchema.parse(await req.json()));
+    Object.assign(job, input);
     await job.save();
     return Response.json(toJobDto(job));
   },

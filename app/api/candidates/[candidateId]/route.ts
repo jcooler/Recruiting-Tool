@@ -11,8 +11,8 @@ const writeGuard = { minRole: "recruiter" as const, rateLimit: { ...RATE_LIMITS.
 export const GET = withAuth(async (_req, ctx) => Response.json(toCandidateDto(await findCandidateOr404(ctx))));
 
 export const PATCH = withAuth(async (req: NextRequest, ctx) => {
-  const candidate = await findCandidateOr404(ctx);
   const input = updateCandidateSchema.parse(await req.json());
+  const candidate = await findCandidateOr404(ctx);
   Object.assign(candidate, input);
   candidate.activity.push(activityEntry(ctx, "updated", "profile updated"));
   await candidate.save();

@@ -9,8 +9,8 @@ export const runtime = "nodejs";
 
 export const POST = withAuth(
   async (req: NextRequest, ctx) => {
-    const candidate = await findCandidateOr404(ctx);
     const input = noteSchema.parse(await req.json());
+    const candidate = await findCandidateOr404(ctx);
 
     candidate.notes.push({
       authorId: ctx.user.id,
