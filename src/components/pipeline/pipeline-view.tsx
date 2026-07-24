@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import { useCandidates, useJobs, useMoveStage } from "@/hooks/queries";
@@ -78,9 +78,25 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
   });
   const moveStage = useMoveStage();
 
-  // ?candidate=<id> opens the drawer on load (e.g. a shared/bookmarked link).
-  // Closing it and keeping the URL in sync is Task 26's job (CandidateDrawer).
+  // ?candidate=<id> opens the drawer on the initial load only (e.g. a
+  // shared/bookmarked link) — the ref below makes this a run-once effect
+  // rather than one that reopens on every `searchParams` change. Closing the
+  // drawer and keeping the URL in sync afterward is Task 26's job
+  // (CandidateDrawer's own write-effect), and that's load-bearing: without
+  // the ref guard, this effect would also refire on the *close* path (any
+  // `searchParams` object-identity change re-runs a `useSearchParams()`
+  // dependency, including ones the write-effect itself caused), racing that
+  // effect's own delayed `router.replace`. Verified live (task-33c): opening
+  // a candidate then closing it within ~500ms let this effect observe a
+  // stale `searchParams` snapshot that still had the just-closed `?candidate=`
+  // param (CandidateDrawer's Suspense boundary hadn't yet caught up with its
+  // own prior `router.replace`), silently reopening the drawer the user had
+  // just dismissed — full-bleed on a mobile viewport, so it read as the
+  // entire app going black behind whatever the user tapped next.
+  const consumedInitialCandidateParam = useRef(false);
   useEffect(() => {
+    if (consumedInitialCandidateParam.current) return;
+    consumedInitialCandidateParam.current = true;
     const candidateId = searchParams.get("candidate");
     if (candidateId) openDrawer(candidateId);
   }, [searchParams, openDrawer]);
