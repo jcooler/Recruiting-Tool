@@ -14,10 +14,11 @@ export const PATCH = withAuth(
     const userId = objectIdSchema.parse(ctx.params.userId);
     if (new Types.ObjectId(userId).equals(ctx.user.id)) throw new ApiError(400, "You cannot change your own role");
 
+    const { role } = memberRoleSchema.parse(await req.json());
+
     const target = await UserModel.findOne({ _id: userId, workspaceId: ctx.user.workspaceId }).exec();
     if (!target) throw new ApiError(404, "User not found");
 
-    const { role } = memberRoleSchema.parse(await req.json());
     target.role = role;
     await target.save();
 
