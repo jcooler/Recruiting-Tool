@@ -41,7 +41,17 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    // touch.spec.ts is touch-only (page.tap() throws without hasTouch), so the
+    // mouse-profile project must skip it; every other spec stays mouse-profile.
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: "**/touch.spec.ts" },
+    // Real touch emulation (hasTouch + touch-derived pointer events), not a
+    // resized desktop viewport — the two pipelines diverge exactly where the
+    // task-33c-era blackout lived (see tests/e2e/touch.spec.ts). browserName
+    // overrides the descriptor's webkit default: the bug's habitat is Chrome
+    // DevTools device emulation, and chromium is the only browser installed.
+    { name: "touch", use: { ...devices["iPhone 14"], browserName: "chromium" }, testMatch: "**/touch.spec.ts" },
+  ],
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3000",
