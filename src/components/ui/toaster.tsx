@@ -59,7 +59,7 @@ export function Toaster() {
               aria-label="Dismiss"
               className={cn(
                 "shrink-0 rounded-md p-1 text-text-3 transition-colors hover:bg-surface-2 hover:text-text",
-                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               )}
             >
               <IconX size={14} />

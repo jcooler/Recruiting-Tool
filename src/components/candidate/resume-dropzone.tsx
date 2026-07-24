@@ -81,7 +81,7 @@ export function ResumeDropzone({ onParsed, onEnterManually }: ResumeDropzoneProp
       <label
         className={cn(
           "flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors",
-          "focus-within:outline-none focus-within:outline-2 focus-within:outline-accent focus-within:outline-offset-2",
+          "focus-within:outline-none focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-bg",
           dragActive ? "border-accent bg-accent-soft" : "border-border bg-surface-2 hover:border-accent/50",
           pending && "pointer-events-none opacity-70"
         )}

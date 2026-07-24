@@ -48,7 +48,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
         aria-label="Open navigation menu"
         className={cn(
           "-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-2 transition-colors md:hidden",
-          "hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          "hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
         )}
       >
         <IconMenu size={18} />
@@ -59,7 +59,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
         onClick={() => setPaletteOpen(true)}
         className={cn(
           "flex h-9 min-w-0 max-w-sm flex-1 items-center gap-2 rounded-md border border-border bg-bg px-3 text-sm text-text-3 transition-colors sm:flex-none sm:w-64",
-          "hover:border-text-3/50 hover:text-text-2 focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          "hover:border-text-3/50 hover:text-text-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
         )}
       >
         <IconSearch size={15} className="shrink-0" />
@@ -102,7 +102,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
               aria-label="Account menu"
               className={cn(
                 "flex items-center gap-1.5 rounded-md p-1 pr-1.5 transition-colors",
-                "hover:bg-surface-2 focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                "hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               )}
             >
               <Avatar seed={me?.username ?? "account"} name={me?.username ?? "Account"} size={28} />

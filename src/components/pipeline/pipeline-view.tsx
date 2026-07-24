@@ -150,7 +150,7 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
               onClick={() => setMode("active")}
               className={cn(
                 "inline-flex h-9 items-center px-3 text-sm font-medium transition-colors",
-                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                 mode === "active" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
               )}
             >
@@ -162,7 +162,7 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
               onClick={() => setMode("rejected")}
               className={cn(
                 "inline-flex h-9 items-center border-l border-border px-3 text-sm font-medium transition-colors",
-                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                 mode === "rejected" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
               )}
             >
@@ -177,7 +177,7 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
               onClick={() => setView("board")}
               className={cn(
                 "inline-flex h-9 items-center gap-1.5 px-3 text-sm font-medium transition-colors",
-                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                 view === "board" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
               )}
             >
@@ -190,7 +190,7 @@ function PipelineViewInner({ jobId }: PipelineViewProps) {
               onClick={() => setView("table")}
               className={cn(
                 "inline-flex h-9 items-center gap-1.5 border-l border-border px-3 text-sm font-medium transition-colors",
-                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                 view === "table" ? "bg-accent-soft text-accent" : "bg-surface text-text-2 hover:bg-surface-2"
               )}
             >

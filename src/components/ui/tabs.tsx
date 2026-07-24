@@ -28,7 +28,7 @@ export const TabsTrigger = forwardRef<
       className={cn(
         "relative -mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-2 transition-colors",
         "hover:text-text",
-        "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         "data-[state=active]:border-accent data-[state=active]:text-text",
         className
       )}
@@ -45,7 +45,7 @@ export const TabsContent = forwardRef<
     <RadixTabs.Content
       ref={ref}
       className={cn(
-        "pt-4 focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+        "pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         className
       )}
       {...props}

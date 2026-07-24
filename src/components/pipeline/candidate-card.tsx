@@ -125,7 +125,7 @@ export function CandidateCard({
       transition={{ duration: 0.15 }}
       className={cn(
         "flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 text-left transition-colors",
-        "hover:border-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+        "hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         draggable && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-40",
         overlay && "shadow-lg"
@@ -145,7 +145,7 @@ export function CandidateCard({
                 // axe's target-size rule flagged it) without shifting the job
                 // title below it — the negative margin cancels the padding's
                 // effect on layout flow, so only the hit area grows.
-                className="-my-0.5 min-w-0 flex-1 truncate rounded-sm py-0.5 text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="-my-0.5 min-w-0 flex-1 truncate rounded-sm py-0.5 text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 {candidate.name}
               </button>
@@ -166,7 +166,7 @@ export function CandidateCard({
               <button
                 type="button"
                 aria-label={`Actions for ${candidate.name}`}
-                className="flex size-6 shrink-0 items-center justify-center rounded-md text-text-3 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="flex size-6 shrink-0 items-center justify-center rounded-md text-text-3 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 <IconDots size={14} />
               </button>
