@@ -71,6 +71,35 @@ device variety. They are right.
 - Definition of done: owner walks every view in DevTools device emulation across the matrix and
   finds nothing broken.
 
+## §2b Resume parsing — pulled forward from v2 by the owner (2026-07-24)
+
+**The problem:** the owner tested their real resume: name not extracted, only dictionary skills
+found. Root cause is architectural, not a bug — `src/lib/resume.ts` extracts text (pdf-parse /
+mammoth), then: name = the FIRST non-empty line only, accepted iff 2-5 words / ≤60 chars / no
+digit / no `@`; skills = a fixed 60-term dictionary. Real resumes (headlines, columns, sidebars,
+name+contact merged lines) fail the first-line gamble constantly. The landing page claims
+"parses résumés the moment they land" — the current parser can't back that claim.
+
+**Two-tier fix (brainstorm the split with the owner, then plan):**
+1. **Heuristic upgrade** (offline-testable, small): scan the first ~10 lines for a name-shaped
+   candidate; skip headline words (ENGINEER, DEVELOPER, RESUME, CV, …); split "Name | contact"
+   lines and evaluate the name half; use the extracted email's local-part as a strong hint
+   (jon.cooler@… → fuzzy-match "Jon Cooler" against nearby lines). Unit-test against a corpus of
+   realistic fixture layouts (single-column, headline-first, sidebar/two-column extraction order,
+   name-with-credentials, all-caps).
+2. **LLM extraction as the primary path** (the real fix): hand extracted text to a small fast
+   Claude model with a strict zod-validated schema (name, email, phone, skills — free-form, not
+   dictionary-bound — education, location, summary); heuristics remain the automatic fallback
+   when no `ANTHROPIC_API_KEY` is configured or the call fails, so offline/keyless still works.
+   Implementing session must load the `claude-api` skill for current model ids/pricing before
+   writing this. Cost is fractions of a cent per parse (small-model tier); the parse route
+   already has a 20/min rate limit. Needs network for live verification (registry/API — verify
+   DNS state first); build + mocked-client unit tests work offline. Update the resume-dropzone
+   error/success copy and README's feature claims to match whatever ships.
+
+Sequencing vs §1/§2 is the owner's call in brainstorm — §2b is independent of the responsive work
+and could run as parallel SDD tasks or its own wave.
+
 ## §3 Infrastructure the new session inherits
 
 - SDD machinery: `.superpowers/sdd/` — `progress.md` ledger (append per task, keep RESUME block
@@ -108,9 +137,10 @@ device descriptor, tap events) exactly as §1 mandates, root-cause with DOM evid
 root, add a touch-emulation e2e pin, run the full gates, and get it task-reviewed per
 superpowers:subagent-driven-development.
 
-Then: use superpowers:brainstorming with me to settle the device/viewport matrix and per-view
-questions in handoff §2, write the implementation plan with superpowers:writing-plans (save under
-docs/superpowers/plans/), and execute it with superpowers:subagent-driven-development, task
-reviews included. The definition of done is §2's: I walk every view in DevTools device emulation
-across the agreed matrix and find nothing broken.
+Then: use superpowers:brainstorming with me to settle (a) the device/viewport matrix and per-view
+questions in handoff §2, and (b) the resume-parsing upgrade in §2b (heuristic tier vs LLM tier vs
+both, and how it sequences against the responsive work). Write the implementation plan with
+superpowers:writing-plans (save under docs/superpowers/plans/), and execute it with
+superpowers:subagent-driven-development, task reviews included. Definition of done: §2's device
+walkthrough finds nothing broken, and §2b's parser correctly extracts my real resume's name.
 ```
