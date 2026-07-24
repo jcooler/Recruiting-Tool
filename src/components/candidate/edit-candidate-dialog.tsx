@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type RefObject } from "react";
 import { useController, useForm, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -102,6 +102,8 @@ export interface EditCandidateDialogProps {
   candidate: CandidateDto;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** See `Dialog`'s doc comment — `CandidateDrawer` passes its overflow-menu trigger's ref, so focus restores there instead of `<body>` after this dropdown-launched dialog closes. */
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -111,7 +113,7 @@ export interface EditCandidateDialogProps {
  * unlike `JobFormDialog`, there's no create path here (that's the separate
  * Add candidate flow); `candidate` is a required prop, not optional.
  */
-export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandidateDialogProps) {
+export function EditCandidateDialog({ candidate, open, onOpenChange, restoreFocusRef }: EditCandidateDialogProps) {
   const updateCandidate = useUpdateCandidate(candidate.id);
 
   const {
@@ -143,6 +145,7 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
+      restoreFocusRef={restoreFocusRef}
       title="Edit candidate"
       description="Update this candidate's profile."
       footer={

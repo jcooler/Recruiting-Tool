@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type RefObject } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -45,6 +45,8 @@ export interface JobFormDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Present in edit mode; omitted opens the dialog in create mode. */
   job?: JobDto;
+  /** See `Dialog`'s doc comment — `JobsView` passes the specific `JobCard`'s dropdown trigger when opened via its "Edit" menu item; `null`/omitted (e.g. the page's own "New job" button) falls back to the default `document.activeElement` capture. */
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -55,7 +57,7 @@ export interface JobFormDialogProps {
  * is reseeded from `job` (or blanked) every time it transitions to open,
  * rather than only on first mount.
  */
-export function JobFormDialog({ open, onOpenChange, job }: JobFormDialogProps) {
+export function JobFormDialog({ open, onOpenChange, job, restoreFocusRef }: JobFormDialogProps) {
   const isEdit = Boolean(job);
   const createJob = useCreateJob();
   const updateJob = useUpdateJob(job?.id ?? "");
@@ -98,6 +100,7 @@ export function JobFormDialog({ open, onOpenChange, job }: JobFormDialogProps) {
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
+      restoreFocusRef={restoreFocusRef}
       title={isEdit ? "Edit job" : "New job"}
       description={isEdit ? "Update this role's details." : "Add a role to start tracking candidates against it."}
       footer={

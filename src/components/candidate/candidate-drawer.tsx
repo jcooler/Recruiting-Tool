@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
@@ -66,10 +66,12 @@ interface DeleteCandidateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted: () => void;
+  /** See `Dialog`'s doc comment — the drawer's dropdown-trigger ref, so focus restores there instead of `<body>` after this dropdown-launched dialog closes. */
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }
 
 /** Confirm-delete dialog for the header's overflow menu — the drawer's only consumer, so it stays private to this file. */
-function DeleteCandidateDialog({ candidate, open, onOpenChange, onDeleted }: DeleteCandidateDialogProps) {
+function DeleteCandidateDialog({ candidate, open, onOpenChange, onDeleted, restoreFocusRef }: DeleteCandidateDialogProps) {
   const deleteCandidate = useDeleteCandidate();
 
   async function handleDelete() {
@@ -87,6 +89,7 @@ function DeleteCandidateDialog({ candidate, open, onOpenChange, onDeleted }: Del
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
+      restoreFocusRef={restoreFocusRef}
       title="Delete this candidate?"
       description={`This permanently deletes "${candidate.name}" and their history. This can't be undone.`}
       footer={
@@ -145,6 +148,9 @@ function CandidateDrawerInner() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const suppressMenuAutoFocus = useRef(false);
+  // The overflow-menu trigger, passed to both Edit and Delete's dialogs as
+  // `restoreFocusRef` — see `Dialog`'s doc comment.
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Write side of the `?candidate=` URL sync — PipelineView's effect owns
   // the read side (URL -> store, on mount/navigation). Keeping the two
@@ -223,9 +229,10 @@ function CandidateDrawerInner() {
                   <Dropdown>
                     <DropdownTrigger asChild>
                       <button
+                        ref={menuTriggerRef}
                         type="button"
                         aria-label={`Actions for ${candidate.name}`}
-                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-text-3 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-text-3 transition-colors hover:bg-surface-2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                       >
                         <IconDots size={16} />
                       </button>
@@ -328,12 +335,18 @@ function CandidateDrawerInner() {
 
       {candidate && canEdit && (
         <>
-          <EditCandidateDialog candidate={candidate} open={editOpen} onOpenChange={setEditOpen} />
+          <EditCandidateDialog
+            candidate={candidate}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            restoreFocusRef={menuTriggerRef}
+          />
           <DeleteCandidateDialog
             candidate={candidate}
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
             onDeleted={closeDrawer}
+            restoreFocusRef={menuTriggerRef}
           />
         </>
       )}
