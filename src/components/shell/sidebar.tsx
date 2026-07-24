@@ -58,7 +58,7 @@ export function NavLinks({ onNavigate, className }: { onNavigate?: () => void; c
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                 active ? "bg-accent-soft text-accent" : "text-text-2 hover:bg-surface-2 hover:text-text"
               )}
             >
@@ -76,7 +76,7 @@ function Logo() {
   return (
     <Link
       href="/dashboard"
-      className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+      className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-bold text-accent-fg">
         AW

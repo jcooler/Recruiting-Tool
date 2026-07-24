@@ -111,7 +111,7 @@ export function JobHeader({ jobId }: JobHeaderProps) {
     <div className="flex flex-col gap-6">
       <Link
         href="/jobs"
-        className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-text-2 transition-colors hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-text-2 transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <IconArrowRight size={14} className="rotate-180" />
         Back to jobs

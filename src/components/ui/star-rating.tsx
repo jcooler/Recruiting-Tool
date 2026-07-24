@@ -90,7 +90,7 @@ export function StarRating({ value, onChange, readOnly = false, className }: Sta
               className={cn(
                 "flex size-6 items-center justify-center rounded-md text-text-3 transition-colors",
                 interactive &&
-                  "hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+                  "hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                 filled && "text-accent",
                 readOnly && "cursor-default"
               )}

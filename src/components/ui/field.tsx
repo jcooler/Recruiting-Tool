@@ -17,7 +17,7 @@ import { resolveTagCommit } from "./tag-input-logic";
 const CONTROL_BASE =
   "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text " +
   "placeholder:text-text-3 transition-colors " +
-  "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg " +
   "disabled:cursor-not-allowed disabled:opacity-50 " +
   "[&[aria-invalid=true]]:border-danger";
 
@@ -138,7 +138,7 @@ export function TagInput({
       <div
         className={cn(
           "flex flex-wrap items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1.5 transition-colors",
-          "focus-within:outline-none focus-within:outline-2 focus-within:outline-accent focus-within:outline-offset-2",
+          "focus-within:outline-none focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-bg",
           className
         )}
       >
@@ -152,7 +152,7 @@ export function TagInput({
               type="button"
               onClick={() => removeAt(i)}
               aria-label={`Remove ${tag}`}
-              className="flex size-4 items-center justify-center rounded-full text-text-3 transition-colors hover:bg-border hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex size-4 items-center justify-center rounded-full text-text-3 transition-colors hover:bg-border hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
             >
               <IconX size={10} />
             </button>

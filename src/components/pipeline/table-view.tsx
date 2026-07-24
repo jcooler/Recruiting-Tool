@@ -116,7 +116,7 @@ export function TableView({ candidates, jobsById, onOpen, onClearFilters, mode }
             <button
               type="button"
               onClick={() => onOpen(candidate.id)}
-              className="truncate rounded-sm text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              className="truncate rounded-sm text-sm font-medium text-text hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
             >
               {candidate.name}
             </button>
@@ -236,7 +236,7 @@ export function TableView({ candidates, jobsById, onOpen, onClearFilters, mode }
                 <button
                   type="button"
                   onClick={header.column.getToggleSortingHandler()}
-                  className="inline-flex items-center gap-1 rounded-sm hover:text-text focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  className="inline-flex items-center gap-1 rounded-sm hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
                   <SortArrow direction={header.column.getIsSorted()} />
