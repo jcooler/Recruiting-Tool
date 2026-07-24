@@ -7,7 +7,6 @@ import { toast } from "@/components/ui/toast";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { StageBadge } from "@/components/ui/stage-badge";
-import { StarRating } from "@/components/ui/star-rating";
 import {
   IconArrowRight,
   IconBoard,
@@ -15,6 +14,8 @@ import {
   IconContrast,
   IconSearch,
   IconShield,
+  IconStar,
+  IconStarFilled,
   IconUpload,
   type IconProps,
 } from "@/components/ui/icons";
@@ -214,12 +215,40 @@ function Hero() {
 }
 
 /**
+ * A purely decorative 5-star row for the pipeline mock's cards — NOT the
+ * real `StarRating` control. `StarRating` is a `radiogroup` of six size-6
+ * buttons (five stars plus an n=0 "clear" option drawn as an `IconX`) with a
+ * persistent "n/5" text label: ≈190px minimum width, correct for the real
+ * interactive control (drawer/table) but wider than these ~150px mock
+ * cards, which wrapped it onto two lines with the "clear" `×` and the "n/5"
+ * label crammed against the stars. This is just five small icons in a row —
+ * no zero-option, no label, no buttons — sized to always fit on one line at
+ * both mobile and desktop widths. `aria-hidden` (redundant with the whole
+ * mock's own `aria-hidden` below, kept here too since this piece is the one
+ * that would otherwise look interactive).
+ */
+function MockStarRow({ rating }: { rating: number }) {
+  return (
+    <div className="mt-1.5 flex items-center gap-0.5" aria-hidden="true">
+      {[1, 2, 3, 4, 5].map((n) =>
+        n <= rating ? (
+          <IconStarFilled key={n} size={10} className="text-accent" />
+        ) : (
+          <IconStar key={n} size={10} className="text-text-3" />
+        )
+      )}
+    </div>
+  );
+}
+
+/**
  * The product's signature visual: a stylized snapshot of the pipeline board
- * built from the real `StageBadge`, `Avatar`, and `StarRating` components —
- * static mock data, never fetched, and `aria-hidden` since it's decorative
- * (the text above already states everything a screen reader user needs).
- * The fake window chrome (traffic-light dots + title bar) frames it as a
- * product surface rather than an abstract illustration.
+ * built from the real `StageBadge` and `Avatar` components (plus the
+ * decorative `MockStarRow` above, standing in for `StarRating` — see its own
+ * doc comment for why) — static mock data, never fetched, and `aria-hidden`
+ * since it's decorative (the text above already states everything a screen
+ * reader user needs). The fake window chrome (traffic-light dots + title
+ * bar) frames it as a product surface rather than an abstract illustration.
  */
 function PipelineMock() {
   return (
@@ -241,7 +270,7 @@ function PipelineMock() {
                     <Avatar seed={c.seed} name={c.name} size={24} />
                     <span className="truncate text-xs font-medium text-text">{c.name}</span>
                   </div>
-                  {c.rating > 0 && <StarRating value={c.rating} readOnly className="mt-1.5 scale-90 origin-left" />}
+                  {c.rating > 0 && <MockStarRow rating={c.rating} />}
                 </div>
               ))}
             </div>
