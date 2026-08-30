@@ -5,7 +5,9 @@ const isDev = process.env.NODE_ENV !== "production";
 // Next.js dev mode (React Refresh / HMR) evaluates code via eval(), which a
 // strict script-src forbids. Allow 'unsafe-eval' in development only; the
 // production CSP stays strict.
-const scriptSrc = isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'";
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com"
+  : "script-src 'self' 'unsafe-inline'";
 
 const csp = [
   "default-src 'self'",
@@ -29,6 +31,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  agentRules: false,
   serverExternalPackages: ["mongoose", "bcrypt", "pdf-parse", "mammoth"],
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
